@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "TrueReact",
+    "slug": "truereact",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a1a2e"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.truereact.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "TrueReact uses the camera to analyze your facial expressions and provide real-time coaching.",
+        "NSMicrophoneUsageDescription": "TrueReact uses the microphone to analyze your voice patterns and provide coaching feedback."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a1a2e"
+      },
+      "package": "com.truereact.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "TrueReact needs camera access for expression analysis."
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "TrueReact needs microphone access for voice analysis."
+        }
+      ]
+    ]
+  }
+}

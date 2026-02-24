@@ -1,0 +1,86 @@
+# TrueReact - Cloud Build Configuration
+#
+# Builds and deploys the TrueReact backend to Cloud Run
+
+steps:
+  # Step 1: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/truereact-backend:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/truereact-backend:latest'
+      - './backend'
+    id: 'build-image'
+
+  # Step 2: Push the Docker image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/truereact-backend:$COMMIT_SHA'
+    id: 'push-image'
+    waitFor: ['build-image']
+
+  # Step 3: Push latest tag
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/truereact-backend:latest'
+    waitFor: ['push-image']
+
+  # Step 4: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'truereact-backend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/truereact-backend:$COMMIT_SHA'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--memory'
+      - '2Gi'
+      - '--cpu'
+      - '2'
+      - '--timeout'
+      - '3600'
+      - '--concurrency'
+      - '100'
+      - '--min-instances'
+      - '1'
+      - '--max-instances'
+      - '10'
+      - '--set-env-vars'
+      - 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_REGION=${_REGION}'
+      - '--set-secrets'
+      - 'GEMINI_API_KEY=gemini-api-key:latest,VERTEX_SEARCH_DATASTORE_ID=vertex-datastore-id:latest'
+    id: 'deploy-cloud-run'
+    waitFor: ['push-image']
+
+# Substitutions (can be overridden)
+substitutions:
+  _REGION: 'us-central1'
+
+# Build options
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
+
+# Images to store in Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/truereact-backend:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/truereact-backend:latest'
+
+# Build timeout
+timeout: '1200s'
+
+# Tags for organization
+tags:
+  - 'truereact'
+  - 'backend'
+  - 'cloud-run'
