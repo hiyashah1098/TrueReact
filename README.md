@@ -152,7 +152,3 @@ TrueReact implements **Safe-State Logic**:
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
-
----
-
-*Built for Hacklytics 2026 🚀*
