@@ -10,13 +10,33 @@ import base64
 from typing import Optional, Callable, Dict, Any
 import json
 
-import google.generativeai as genai
-from google.generativeai import types
+from google import genai
+from google.genai import types
 
 from src.config import settings
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
+
+# Global client instance
+_client: Optional[genai.Client] = None
+
+
+def get_client() -> genai.Client:
+    """Get or create the Gemini client."""
+    global _client
+    if _client is None:
+        _client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    return _client
+
+
+def create_grounding_config() -> Optional[types.GoogleSearch]:
+    """Create grounding configuration if Google Search is enabled."""
+    if not settings.GOOGLE_SEARCH_GROUNDING_ENABLED:
+        return None
+    
+    logger.info("Google Search grounding enabled")
+    return types.GoogleSearch()
 
 
 class GeminiLiveStream:
@@ -52,7 +72,14 @@ COACHING STYLE:
 - Be warm, supportive, and non-judgmental
 - Provide specific, actionable feedback
 - Focus on helping users project their "true" intent
-- Use evidence-based CBT/DBT techniques
+- Use evidence-based CBT/DBT techniques (use Google Search to find clinical sources)
+
+GROUNDING:
+When suggesting techniques, use Google Search to:
+- Find evidence-based CBT/DBT practices
+- Locate clinical techniques for the specific issue detected
+- Verify your suggestions against research literature
+- Find crisis resources when detecting distress
 
 RESPONSE FORMAT:
 When providing coaching feedback, structure your response as:
@@ -60,7 +87,8 @@ When providing coaching feedback, structure your response as:
     "observation": "What you noticed",
     "interpretation": "What it might communicate to others",
     "suggestion": "Specific technique to try",
-    "encouragement": "Supportive message"
+    "encouragement": "Supportive message",
+    "source": "Clinical source if grounded (optional)"
 }
 
 SAFETY:
@@ -71,34 +99,48 @@ SAFETY:
     async def initialize(self) -> None:
         """Initialize the Gemini Live session."""
         try:
-            # Create a live session with multimodal capabilities
-            self.session = await genai.LiveSession.create(
-                model=settings.GEMINI_MODEL,
-                config=types.LiveConnectConfig(
-                    response_modalities=["TEXT", "AUDIO"],
-                    system_instruction=self.system_instruction,
-                    tools=[
-                        types.Tool(
-                            function_declarations=[
-                                types.FunctionDeclaration(
-                                    name="provide_coaching_feedback",
-                                    description="Provide real-time coaching feedback to the user",
-                                    parameters={
-                                        "type": "object",
-                                        "properties": {
-                                            "observation": {"type": "string"},
-                                            "interpretation": {"type": "string"},
-                                            "suggestion": {"type": "string"},
-                                            "encouragement": {"type": "string"},
-                                            "urgency": {"type": "string", "enum": ["low", "normal", "high"]}
-                                        },
-                                        "required": ["observation", "suggestion"]
-                                    }
-                                )
-                            ]
+            client = get_client()
+            
+            # Build tools configuration
+            tools = []
+            
+            # Add function declarations for coaching feedback
+            tools.append(types.Tool(
+                function_declarations=[
+                    types.FunctionDeclaration(
+                        name="provide_coaching_feedback",
+                        description="Provide real-time coaching feedback to the user",
+                        parameters=types.Schema(
+                            type=types.Type.OBJECT,
+                            properties={
+                                "observation": types.Schema(type=types.Type.STRING),
+                                "interpretation": types.Schema(type=types.Type.STRING),
+                                "suggestion": types.Schema(type=types.Type.STRING),
+                                "encouragement": types.Schema(type=types.Type.STRING),
+                                "urgency": types.Schema(type=types.Type.STRING, enum=["low", "normal", "high"])
+                            },
+                            required=["observation", "suggestion"]
                         )
-                    ]
-                )
+                    )
+                ]
+            ))
+            
+            # Add Google Search grounding if enabled
+            google_search = create_grounding_config()
+            if google_search:
+                tools.append(types.Tool(google_search=google_search))
+                logger.info(f"Live session {self.session_id}: Google Search grounding enabled")
+            
+            # Create a live session with multimodal capabilities
+            config = types.LiveConnectConfig(
+                response_modalities=["TEXT", "AUDIO"],
+                system_instruction=self.system_instruction,
+                tools=tools
+            )
+            
+            self.session = await client.aio.live.connect(
+                model=settings.GEMINI_MODEL,
+                config=config
             )
             
             self.is_active = True
@@ -268,26 +310,30 @@ class GeminiLiveService:
     
     def __init__(self):
         self.is_ready = False
-        self.model = None
+        self.client = None
+        self.system_instruction = None
         
     async def initialize(self) -> None:
         """Initialize the Gemini API client."""
         try:
-            # Configure the Gemini API
-            genai.configure(api_key=settings.GEMINI_API_KEY)
+            # Get the shared client
+            self.client = get_client()
             
-            # Initialize the model for non-streaming queries
-            self.model = genai.GenerativeModel(
-                model_name=settings.GEMINI_MODEL,
-                system_instruction="""You are TrueReact's analysis engine.
+            # Build system instruction with grounding guidance
+            self.system_instruction = """You are TrueReact's analysis engine.
                 
 When analyzing user interactions, provide detailed insights about:
 - Social signal alignment (expression vs. tone)
 - Potential misinterpretations
 - Specific improvement suggestions
 
-Be constructive and supportive in your analysis."""
-            )
+Be constructive and supportive in your analysis.
+
+IMPORTANT: When providing coaching techniques or mental health suggestions,
+ground your responses in evidence-based CBT/DBT practices.
+Reference established clinical techniques from Cognitive Behavioral Therapy,
+Dialectical Behavior Therapy, and social skills training literature.
+Cite sources when providing clinical techniques."""
             
             self.is_ready = True
             logger.info("Gemini API service initialized")
@@ -330,10 +376,12 @@ Be constructive and supportive in your analysis."""
         Returns:
             Analysis and suggestions
         """
-        if not self.model:
+        if not self.client:
             raise RuntimeError("Gemini service not initialized")
             
-        prompt = f"""The user interrupted to ask: "{question}"
+        prompt = f"""{self.system_instruction}
+
+The user interrupted to ask: "{question}"
 
 Recent context:
 {json.dumps(recent_context, indent=2)}
@@ -347,9 +395,18 @@ Analyze the user's recent social signals and provide:
 Respond in JSON format with keys: analysis, observations, technique, encouragement"""
 
         try:
-            response = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: self.model.generate_content(prompt)
+            # Build generation config with grounding if enabled
+            tools = []
+            google_search = create_grounding_config()
+            if google_search:
+                tools.append(types.Tool(google_search=google_search))
+            
+            response = await self.client.aio.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    tools=tools if tools else None
+                )
             )
             
             # Parse the response

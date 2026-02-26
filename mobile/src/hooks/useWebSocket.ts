@@ -25,7 +25,7 @@ type UseWebSocketReturn = {
 // Configuration
 const WS_URL = __DEV__ 
   ? 'ws://localhost:8080/ws/session' 
-  : 'wss://truereact-backend-xxxxx.run.app/ws/session';
+  : 'wss://truereact-backend-636712945693.us-central1.run.app/ws/session';
 
 const RECONNECT_DELAY = 3000;
 const MAX_RECONNECT_ATTEMPTS = 5;

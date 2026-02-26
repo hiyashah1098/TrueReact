@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
     # Google Cloud Configuration
-    GOOGLE_CLOUD_PROJECT: str = "truereact-project"
+    GOOGLE_CLOUD_PROJECT: str = "project-2d4bbf33-4fa1-4e7c-8f1"
     GOOGLE_CLOUD_REGION: str = "us-central1"
     
     # Gemini API Configuration
@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     # Safety Settings
     DISTRESS_THRESHOLD: float = 0.7
     CRISIS_RESOURCE_ENABLED: bool = True
+    
+    # Grounding Settings
+    GOOGLE_SEARCH_GROUNDING_ENABLED: bool = True
+    GROUNDING_DYNAMIC_THRESHOLD: float = 0.3
     
     # CORS Settings
     ALLOWED_ORIGINS: List[str] = ["*"]
