@@ -1,0 +1,13 @@
+#!/bin/sh
+# Pre-commit hook to prevent .env files from being committed
+
+# Check for .env files in staged changes
+if git diff --cached --name-only | grep -E '\.env$' | grep -v '\.env\.example$'; then
+    echo ""
+    echo "ERROR: Attempting to commit .env file with secrets!"
+    echo "Remove the .env file from staging with: git reset HEAD <file>"
+    echo ""
+    exit 1
+fi
+
+exit 0
