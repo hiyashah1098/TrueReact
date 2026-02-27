@@ -136,9 +136,9 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
 
   if (!cameraPermission?.granted || !audioPermission) {
     return (
-      <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.container}>
+      <LinearGradient colors={['#1A1625', '#252136']} style={styles.container}>
         <View style={styles.permissionContainer}>
-          <Ionicons name="camera-outline" size={64} color="#e94560" />
+          <Ionicons name="camera-outline" size={64} color="#F5A623" />
           <Text style={styles.permissionTitle}>Permissions Required</Text>
           <Text style={styles.permissionText}>
             TrueReact needs camera and microphone access to analyze your expressions and voice.
@@ -153,10 +153,10 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
 
   if (isComplete) {
     return (
-      <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.container}>
+      <LinearGradient colors={['#1A1625', '#252136']} style={styles.container}>
         <View style={styles.completeContainer}>
           <View style={styles.checkCircle}>
-            <Ionicons name="checkmark" size={64} color="#4ade80" />
+            <Ionicons name="checkmark" size={64} color="#7BC67E" />
           </View>
           <Text style={styles.completeTitle}>Calibration Complete!</Text>
           <Text style={styles.completeText}>
@@ -164,7 +164,7 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
           </Text>
           <TouchableOpacity style={styles.proceedButton} onPress={proceedToSession}>
             <LinearGradient
-              colors={['#e94560', '#c23a51']}
+              colors={['#F5A623', '#D4920D']}
               style={styles.proceedButtonGradient}
             >
               <Text style={styles.proceedButtonText}>Start Coaching</Text>
@@ -186,7 +186,7 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
       >
         {/* Overlay */}
         <LinearGradient
-          colors={['rgba(26, 26, 46, 0.3)', 'rgba(26, 26, 46, 0.7)']}
+          colors={['rgba(26, 22, 37, 0.3)', 'rgba(26, 22, 37, 0.7)']}
           style={styles.overlay}
         >
           {/* Face Guide */}
@@ -251,7 +251,7 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
                   onPress={startCalibration}
                 >
                   <LinearGradient
-                    colors={['#e94560', '#c23a51']}
+                    colors={['#F5A623', '#D4920D']}
                     style={styles.startCalibrationGradient}
                   >
                     <Ionicons name="play" size={20} color="#fff" />
@@ -270,7 +270,7 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#1A1625',
   },
   camera: {
     flex: 1,
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#e94560',
+    backgroundColor: '#F5A623',
     marginRight: 8,
   },
   recordingText: {
@@ -329,30 +329,30 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#e94560',
+    backgroundColor: '#F5A623',
     borderRadius: 2,
   },
   instructionCard: {
-    backgroundColor: 'rgba(26, 26, 46, 0.9)',
+    backgroundColor: 'rgba(26, 22, 37, 0.9)',
     borderRadius: 16,
     padding: 24,
     marginBottom: 24,
   },
   stepIndicator: {
-    color: '#e94560',
+    color: '#9B7EC6',
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 8,
     textTransform: 'uppercase',
   },
   instructionTitle: {
-    color: '#fff',
+    color: '#F5F0E8',
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 8,
   },
   instructionText: {
-    color: '#8b8b8b',
+    color: '#B8B0C8',
     fontSize: 14,
     lineHeight: 22,
   },
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   countdown: {
-    color: '#e94560',
+    color: '#F5A623',
     fontSize: 48,
     fontWeight: 'bold',
   },
@@ -389,20 +389,20 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   permissionTitle: {
-    color: '#fff',
+    color: '#F5F0E8',
     fontSize: 24,
     fontWeight: 'bold',
     marginTop: 24,
     marginBottom: 12,
   },
   permissionText: {
-    color: '#8b8b8b',
+    color: '#B8B0C8',
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 24,
   },
   permissionButton: {
-    backgroundColor: '#e94560',
+    backgroundColor: '#F5A623',
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 12,
@@ -428,13 +428,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   completeTitle: {
-    color: '#fff',
+    color: '#F5F0E8',
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 12,
   },
   completeText: {
-    color: '#8b8b8b',
+    color: '#B8B0C8',
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 32,

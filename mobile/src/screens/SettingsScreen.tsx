@@ -109,7 +109,7 @@ export default function SettingsScreen() {
 
   return (
     <LinearGradient
-      colors={['#1a1a2e', '#16213e']}
+      colors={['#1A1625', '#252136']}
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -119,7 +119,7 @@ export default function SettingsScreen() {
           
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Ionicons name="mic-outline" size={24} color="#e94560" />
+              <Ionicons name="mic-outline" size={24} color="#F5A623" />
               <View style={styles.settingText}>
                 <Text style={styles.settingTitle}>Voice Coaching</Text>
                 <Text style={styles.settingDescription}>
@@ -130,14 +130,14 @@ export default function SettingsScreen() {
             <Switch
               value={voiceCoaching}
               onValueChange={handleVoiceCoachingChange}
-              trackColor={{ false: '#3e3e5e', true: '#e94560' }}
+              trackColor={{ false: '#3e3e5e', true: '#F5A623' }}
               thumbColor="#fff"
             />
           </View>
 
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Ionicons name="phone-portrait-outline" size={24} color="#e94560" />
+              <Ionicons name="phone-portrait-outline" size={24} color="#9B7EC6" />
               <View style={styles.settingText}>
                 <Text style={styles.settingTitle}>Haptic Feedback</Text>
                 <Text style={styles.settingDescription}>
@@ -148,7 +148,7 @@ export default function SettingsScreen() {
             <Switch
               value={hapticEnabled}
               onValueChange={handleHapticChange}
-              trackColor={{ false: '#3e3e5e', true: '#e94560' }}
+              trackColor={{ false: '#3e3e5e', true: '#9B7EC6' }}
               thumbColor="#fff"
             />
           </View>
@@ -160,7 +160,7 @@ export default function SettingsScreen() {
           
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Ionicons name="shield-checkmark-outline" size={24} color="#4ade80" />
+              <Ionicons name="shield-checkmark-outline" size={24} color="#4ECDC4" />
               <View style={styles.settingText}>
                 <Text style={styles.settingTitle}>Safe State Mode</Text>
                 <Text style={styles.settingDescription}>
@@ -196,7 +196,7 @@ export default function SettingsScreen() {
           
           <TouchableOpacity style={styles.settingItemButton} onPress={handleClearData}>
             <View style={styles.settingInfo}>
-              <Ionicons name="trash-outline" size={24} color="#e94560" />
+              <Ionicons name="trash-outline" size={24} color="#E07C7C" />
               <View style={styles.settingText}>
                 <Text style={styles.settingTitle}>Clear Session Data</Text>
                 <Text style={styles.settingDescription}>
@@ -204,12 +204,12 @@ export default function SettingsScreen() {
                 </Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#8b8b8b" />
+            <Ionicons name="chevron-forward" size={20} color="#7A7290" />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.settingItemButton}>
             <View style={styles.settingInfo}>
-              <Ionicons name="document-text-outline" size={24} color="#8b8b8b" />
+              <Ionicons name="document-text-outline" size={24} color="#9B7EC6" />
               <View style={styles.settingText}>
                 <Text style={styles.settingTitle}>Privacy Policy</Text>
                 <Text style={styles.settingDescription}>
@@ -217,7 +217,7 @@ export default function SettingsScreen() {
                 </Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#8b8b8b" />
+            <Ionicons name="chevron-forward" size={20} color="#7A7290" />
           </TouchableOpacity>
         </View>
 
@@ -240,7 +240,7 @@ export default function SettingsScreen() {
           
           {user && (
             <View style={styles.accountInfo}>
-              <Ionicons name="person-circle-outline" size={48} color="#e94560" />
+              <Ionicons name="person-circle-outline" size={48} color="#F5A623" />
               <View style={styles.accountDetails}>
                 <Text style={styles.accountEmail}>{user.email}</Text>
                 <Text style={styles.accountStats}>
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#8b8b8b',
+    color: '#9B7EC6',
     textTransform: 'uppercase',
     marginBottom: 16,
     letterSpacing: 1,
@@ -294,19 +294,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(45, 40, 69, 0.6)',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(155, 126, 198, 0.1)',
   },
   settingItemButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(45, 40, 69, 0.6)',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(155, 126, 198, 0.1)',
   },
   settingInfo: {
     flexDirection: 'row',
@@ -320,12 +324,12 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#fff',
+    color: '#F5F0E8',
     marginBottom: 4,
   },
   settingDescription: {
     fontSize: 13,
-    color: '#8b8b8b',
+    color: '#B8B0C8',
   },
   aboutInfo: {
     alignItems: 'center',
@@ -334,25 +338,27 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#F5F0E8',
     marginBottom: 8,
   },
   version: {
     fontSize: 14,
-    color: '#8b8b8b',
+    color: '#B8B0C8',
     marginBottom: 8,
   },
   copyright: {
     fontSize: 12,
-    color: '#8b8b8b',
+    color: '#7A7290',
   },
   accountInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(45, 40, 69, 0.6)',
     borderRadius: 12,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(155, 126, 198, 0.1)',
   },
   accountDetails: {
     marginLeft: 16,
@@ -361,27 +367,27 @@ const styles = StyleSheet.create({
   accountEmail: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: '#F5F0E8',
     marginBottom: 4,
   },
   accountStats: {
     fontSize: 13,
-    color: '#8b8b8b',
+    color: '#B8B0C8',
   },
   signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: 'rgba(224, 124, 124, 0.1)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderColor: 'rgba(224, 124, 124, 0.3)',
   },
   signOutText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#ef4444',
+    color: '#E07C7C',
     marginLeft: 8,
   },
 });

@@ -57,7 +57,7 @@ export default function SafeStateScreen({ navigation, route }: SafeStateScreenPr
 
   return (
     <LinearGradient
-      colors={['#1a1a2e', '#16213e', '#0f3460']}
+      colors={['#1A1625', '#252136', '#2D2845']}
       style={styles.container}
     >
       <ScrollView 
@@ -67,10 +67,10 @@ export default function SafeStateScreen({ navigation, route }: SafeStateScreenPr
         {/* Heart Icon */}
         <View style={styles.iconContainer}>
           <LinearGradient
-            colors={['rgba(74, 222, 128, 0.2)', 'rgba(74, 222, 128, 0.1)']}
+            colors={['rgba(78, 205, 196, 0.2)', 'rgba(78, 205, 196, 0.1)']}
             style={styles.iconGradient}
           >
-            <Ionicons name="heart" size={48} color="#4ade80" />
+            <Ionicons name="heart" size={48} color="#4ECDC4" />
           </LinearGradient>
         </View>
 
@@ -98,7 +98,7 @@ export default function SafeStateScreen({ navigation, route }: SafeStateScreenPr
             activeOpacity={0.8}
           >
             <View style={styles.resourceIcon}>
-              <Ionicons name="call" size={24} color="#4ade80" />
+              <Ionicons name="call" size={24} color="#4ECDC4" />
             </View>
             <View style={styles.resourceInfo}>
               <Text style={styles.resourceTitle}>988 Suicide & Crisis Lifeline</Text>
@@ -132,7 +132,7 @@ export default function SafeStateScreen({ navigation, route }: SafeStateScreenPr
             activeOpacity={0.8}
           >
             <View style={[styles.resourceIcon, styles.emergencyIcon]}>
-              <Ionicons name="warning" size={24} color="#e94560" />
+              <Ionicons name="warning" size={24} color="#FFB347" />
             </View>
             <View style={styles.resourceInfo}>
               <Text style={styles.resourceTitle}>Emergency Services</Text>

@@ -506,7 +506,7 @@ export default function TechniquesScreen({ navigation }: TechniquesScreenProps) 
         </View>
         <View style={styles.learnMore}>
           <Text style={styles.learnMoreText}>Learn more</Text>
-          <Ionicons name="chevron-forward" size={14} color="#e94560" />
+          <Ionicons name="chevron-forward" size={14} color="#F5A623" />
         </View>
       </View>
     </TouchableOpacity>
@@ -519,7 +519,7 @@ export default function TechniquesScreen({ navigation }: TechniquesScreenProps) 
       presentationStyle="pageSheet"
       onRequestClose={() => setShowDetailModal(false)}
     >
-      <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.modalContainer}>
+      <LinearGradient colors={['#1A1625', '#252136']} style={styles.modalContainer}>
         <View style={styles.modalHeader}>
           <TouchableOpacity 
             style={styles.modalCloseButton}
@@ -597,7 +597,7 @@ export default function TechniquesScreen({ navigation }: TechniquesScreenProps) 
               <View style={styles.detailSection}>
                 <Text style={styles.detailSectionTitle}>Example</Text>
                 <View style={styles.exampleBox}>
-                  <Ionicons name="chatbubble-ellipses-outline" size={20} color="#e94560" />
+                  <Ionicons name="chatbubble-ellipses-outline" size={20} color="#9B7EC6" />
                   <Text style={styles.exampleText}>{selectedTechnique.example}</Text>
                 </View>
               </View>
@@ -606,7 +606,7 @@ export default function TechniquesScreen({ navigation }: TechniquesScreenProps) 
             {/* Practice Button */}
             <TouchableOpacity style={styles.practiceButton}>
               <LinearGradient
-                colors={['#e94560', '#c73a5a']}
+                colors={['#F5A623', '#D4920D']}
                 style={styles.practiceButtonGradient}
               >
                 <Ionicons name="play" size={20} color="#fff" />
@@ -620,7 +620,7 @@ export default function TechniquesScreen({ navigation }: TechniquesScreenProps) 
   );
 
   return (
-    <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.container}>
+    <LinearGradient colors={['#1A1625', '#252136']} style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
@@ -727,14 +727,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(45, 40, 69, 0.6)',
     marginRight: 8,
   },
   categoryChipActive: {
-    backgroundColor: '#e94560',
+    backgroundColor: '#F5A623',
   },
   categoryChipText: {
-    color: '#8b8b8b',
+    color: '#B8B0C8',
     fontSize: 14,
     fontWeight: '500',
     marginLeft: 6,
@@ -813,7 +813,7 @@ const styles = StyleSheet.create({
   },
   learnMoreText: {
     fontSize: 14,
-    color: '#e94560',
+    color: '#F5A623',
     fontWeight: '500',
   },
   emptyContainer: {
@@ -921,7 +921,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#e94560',
+    backgroundColor: '#9B7EC6',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -953,11 +953,11 @@ const styles = StyleSheet.create({
   exampleBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: 'rgba(233, 69, 96, 0.1)',
+    backgroundColor: 'rgba(155, 126, 198, 0.1)',
     padding: 16,
     borderRadius: 12,
     borderLeftWidth: 3,
-    borderLeftColor: '#e94560',
+    borderLeftColor: '#9B7EC6',
   },
   exampleText: {
     flex: 1,

@@ -29,18 +29,22 @@ interface EmotionVisualizerProps {
   size?: 'small' | 'medium' | 'large';
 }
 
-// Emotion colors mapping
+// Emotion colors mapping - Neurodivergent-friendly, softer colors
+// Using the gold/violet/teal palette with warm undertones
 const EMOTION_COLORS: Record<string, { primary: string; secondary: string; }> = {
-  neutral: { primary: '#8E8E93', secondary: '#C7C7CC' },
-  happy: { primary: '#34C759', secondary: '#A8E6CF' },
-  sad: { primary: '#5856D6', secondary: '#B4B3E8' },
-  angry: { primary: '#FF3B30', secondary: '#FF9500' },
-  fearful: { primary: '#FF9500', secondary: '#FFCC00' },
-  surprised: { primary: '#AF52DE', secondary: '#DA9FF9' },
-  disgusted: { primary: '#8B4513', secondary: '#D2691E' },
-  anxious: { primary: '#FF6B6B', secondary: '#FFA07A' },
-  stressed: { primary: '#FF4757', secondary: '#FF6B81' },
-  confused: { primary: '#747D8C', secondary: '#A4B0BE' },
+  neutral: { primary: '#9B7EC6', secondary: '#C4B0E0' },      // Soft violet
+  happy: { primary: '#7BC67E', secondary: '#A8E6CF' },        // Soft green
+  excited: { primary: '#F5A623', secondary: '#FFD166' },      // Gold (autism acceptance)
+  calm: { primary: '#4ECDC4', secondary: '#7EDDD6' },         // Teal (mental health)
+  sad: { primary: '#6B8DD6', secondary: '#9BB3E3' },          // Soft blue
+  angry: { primary: '#E07C7C', secondary: '#F0A8A8' },        // Soft coral
+  fearful: { primary: '#FFB347', secondary: '#FFCC80' },      // Warm amber
+  surprised: { primary: '#C4B0E0', secondary: '#E4D8F4' },    // Light lavender
+  disgusted: { primary: '#8B9A6B', secondary: '#B5C48E' },    // Muted sage
+  anxious: { primary: '#FF9E7A', secondary: '#FFBFA0' },      // Soft peach
+  stressed: { primary: '#D4920D', secondary: '#F5A623' },     // Deep gold
+  confused: { primary: '#7A7290', secondary: '#A4A0B8' },     // Muted purple-gray
+  focused: { primary: '#4ECDC4', secondary: '#7EDDD6' },      // Teal
 };
 
 export default function EmotionVisualizer({

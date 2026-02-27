@@ -38,16 +38,16 @@ const CATEGORY_CONFIG: Record<FeedbackCategory, {
   color: string;
   label: string;
 }> = {
-  expression: { icon: 'happy-outline', color: '#e94560', label: 'Expression' },
-  voice: { icon: 'mic-outline', color: '#60a5fa', label: 'Voice' },
-  posture: { icon: 'body-outline', color: '#4ade80', label: 'Posture' },
-  general: { icon: 'bulb-outline', color: '#fbbf24', label: 'Tip' },
+  expression: { icon: 'happy-outline', color: '#F5A623', label: 'Expression' },  // Gold
+  voice: { icon: 'mic-outline', color: '#4ECDC4', label: 'Voice' },             // Teal
+  posture: { icon: 'body-outline', color: '#7BC67E', label: 'Posture' },        // Soft green
+  general: { icon: 'bulb-outline', color: '#9B7EC6', label: 'Tip' },            // Violet
 };
 
 const URGENCY_COLORS: Record<FeedbackUrgency, string[]> = {
-  low: ['rgba(74, 222, 128, 0.9)', 'rgba(74, 222, 128, 0.7)'],
-  normal: ['rgba(96, 165, 250, 0.9)', 'rgba(96, 165, 250, 0.7)'],
-  high: ['rgba(233, 69, 96, 0.9)', 'rgba(233, 69, 96, 0.7)'],
+  low: ['rgba(123, 198, 126, 0.9)', 'rgba(123, 198, 126, 0.7)'],     // Soft green
+  normal: ['rgba(78, 205, 196, 0.9)', 'rgba(78, 205, 196, 0.7)'],   // Teal
+  high: ['rgba(245, 166, 35, 0.9)', 'rgba(245, 166, 35, 0.7)'],     // Gold (less alarming)
 };
 
 export default function CoachingFeedbackOverlay({ feedback, animatedValue }: Props) {
@@ -75,7 +75,7 @@ export default function CoachingFeedbackOverlay({ feedback, animatedValue }: Pro
       ]}
     >
       <LinearGradient
-        colors={['rgba(26, 26, 46, 0.95)', 'rgba(22, 33, 62, 0.95)']}
+        colors={['rgba(26, 22, 37, 0.95)', 'rgba(37, 33, 54, 0.95)']}
         style={styles.feedbackCard}
       >
         {/* Urgency Indicator */}
@@ -94,7 +94,7 @@ export default function CoachingFeedbackOverlay({ feedback, animatedValue }: Pro
         {/* Observation */}
         {feedback.observation && (
           <View style={styles.observationContainer}>
-            <Ionicons name="eye-outline" size={16} color="#8b8b8b" />
+            <Ionicons name="eye-outline" size={16} color="#B8B0C8" />
             <Text style={styles.observationText}>{feedback.observation}</Text>
           </View>
         )}
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   },
   observationText: {
     fontSize: 14,
-    color: '#8b8b8b',
+    color: '#B8B0C8',
     marginLeft: 8,
     flex: 1,
     lineHeight: 20,
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   },
   suggestionText: {
     fontSize: 15,
-    color: '#fff',
+    color: '#F5F0E8',
     fontWeight: '500',
     marginLeft: 8,
     flex: 1,

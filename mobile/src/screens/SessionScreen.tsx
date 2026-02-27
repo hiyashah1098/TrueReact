@@ -558,7 +558,7 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
           </View>
           
           <TouchableOpacity style={styles.endButton} onPress={endSession}>
-            <Ionicons name="close" size={24} color="#e94560" />
+            <Ionicons name="close" size={24} color="#E07C7C" />
           </TouchableOpacity>
         </LinearGradient>
 
@@ -600,7 +600,7 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
 
         {/* Bottom Controls */}
         <LinearGradient
-          colors={['transparent', 'rgba(26, 26, 46, 0.9)']}
+          colors={['transparent', 'rgba(26, 22, 37, 0.95)']}
           style={styles.bottomBar}
         >
           {/* Barge-in Button */}
@@ -610,7 +610,7 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={['#e94560', '#c23a51']}
+              colors={['#9B7EC6', '#7B68B0']}
               style={styles.bargeInGradient}
             >
               <Ionicons name="hand-left" size={24} color="#fff" />
@@ -666,10 +666,23 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
   );
 }
 
+// Neurodivergent-friendly colors
+const COLORS = {
+  background: '#1A1625',
+  surface: '#252136',
+  gold: '#F5A623',
+  goldLight: '#FFD166',
+  violet: '#9B7EC6',
+  teal: '#4ECDC4',
+  text: '#F5F0E8',
+  textSecondary: '#B8B0C8',
+  error: '#E07C7C',
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: COLORS.background,
   },
   camera: {
     flex: 1,
@@ -706,14 +719,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   demoBadge: {
-    backgroundColor: 'rgba(251, 191, 36, 0.3)',
+    backgroundColor: 'rgba(245, 166, 35, 0.25)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
     marginRight: 12,
   },
   demoBadgeText: {
-    color: '#fbbf24',
+    color: '#F5A623',
     fontSize: 10,
     fontWeight: '600',
   },
@@ -730,7 +743,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(233, 69, 96, 0.2)',
+    backgroundColor: 'rgba(224, 124, 124, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -749,7 +762,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#e94560',
+    backgroundColor: '#F5A623',
     marginRight: 8,
   },
   processingText: {
@@ -760,11 +773,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 120,
     right: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(26, 22, 37, 0.75)',
     borderRadius: 16,
     padding: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(155, 126, 198, 0.3)',
   },
   bottomBar: {
     position: 'absolute',
@@ -812,7 +827,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   historyPeekText: {
-    color: '#8b8b8b',
+    color: '#B8B0C8',
     fontSize: 14,
     marginRight: 4,
   },
