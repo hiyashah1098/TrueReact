@@ -2,20 +2,23 @@
 TrueReact - Session Handler
 
 Handles individual coaching sessions, coordinating between the client,
-Gemini Live API, and Vertex AI grounding for real-time coaching.
+Gemini Live API, multi-agent orchestrator, and Vertex AI grounding 
+for real-time coaching with emotion visualization.
 """
 
 import asyncio
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 from fastapi import WebSocket
 
 from src.services.gemini_live import GeminiLiveService
-from src.services.vertex_grounding import VertexGroundingService
+from src.services.vertex_grounding import VertexGroundingService, EnhancedGroundingService
 from src.services.signal_analyzer import SignalAnalyzer
+from src.agents.orchestrator import AgentOrchestrator, OrchestratorMode, OrchestratedResponse
+from src.agents.safety_agent import SafetyAssessment, DistressLevel
 from src.config import settings
 from src.utils.logging import SessionLogger
 
@@ -43,8 +46,10 @@ class SessionHandler:
     
     Coordinates:
     - Real-time audio/video processing via Gemini Live
+    - Multi-agent orchestration (Emotion, Safety, Research, Coaching)
     - Signal analysis for expressions, voice, and posture
     - Coaching feedback generation with grounding
+    - Real-time emotion visualization data
     - Safe-state transitions for crisis situations
     """
     
@@ -70,10 +75,21 @@ class SessionHandler:
         # Signal analysis
         self.signal_analyzer = SignalAnalyzer()
         
+        # Multi-agent orchestrator
+        self.orchestrator = AgentOrchestrator()
+        self.orchestrator.on_safety_alert = self._handle_safety_alert
+        self.orchestrator.on_mode_change = self._handle_mode_change
+        
+        # Enhanced grounding service
+        self.enhanced_grounding = EnhancedGroundingService()
+        
         # Coaching context
         self.coaching_history: list = []
         self.distress_scores: list = []
         self.baseline_metrics: Optional[dict] = None
+        
+        # Emotion tracking for visualization
+        self.emotion_history: List[Dict[str, Any]] = []
         
         # Logging
         self.logger = SessionLogger(self.session_id, client_id)
@@ -84,6 +100,12 @@ class SessionHandler:
     async def start(self) -> None:
         """Initialize and start the coaching session."""
         self.logger.info("Starting coaching session")
+        
+        # Initialize multi-agent orchestrator
+        self.orchestrator.initialize(self.session_id)
+        
+        # Initialize enhanced grounding
+        await self.enhanced_grounding.initialize()
         
         # Initialize Gemini Live stream for this session
         self.gemini_stream = await self.gemini.create_session_stream(
@@ -96,7 +118,12 @@ class SessionHandler:
             "type": "session_started",
             "session_id": self.session_id,
             "message": "Welcome to TrueReact! Let's start with a quick calibration.",
-            "state": self.state.value
+            "state": self.state.value,
+            "features": {
+                "emotionVisualization": True,
+                "multiAgentOrchestration": True,
+                "groundedCoaching": True
+            }
         })
         
         # Start calibration phase
@@ -155,7 +182,25 @@ class SessionHandler:
         # Analyze vocal signals
         vocal_analysis = self.signal_analyzer.analyze_audio(audio_data)
         
-        # Check for distress markers
+        # Process through multi-agent orchestrator
+        orchestrated_response = await self.orchestrator.process(
+            audio_data=audio_data,
+            audio_analysis=vocal_analysis,
+            user_text=data.get("transcription")
+        )
+        
+        # Send emotion visualization update
+        await self._send_emotion_update(orchestrated_response)
+        
+        # Handle safety actions
+        if orchestrated_response.safety_action in ["offer_resources", "activate_safe_state", "emergency_escalation"]:
+            await self._handle_orchestrator_safety(orchestrated_response)
+        
+        # Send coaching feedback if appropriate
+        if orchestrated_response.should_coach and orchestrated_response.coaching_feedback:
+            await self._send_orchestrated_coaching(orchestrated_response)
+            
+        # Legacy: Check for distress markers
         if vocal_analysis.get("distress_score", 0) > settings.DISTRESS_THRESHOLD:
             await self._check_safe_state_trigger(vocal_analysis)
             
@@ -183,7 +228,24 @@ class SessionHandler:
         # Analyze facial expressions and posture
         visual_analysis = self.signal_analyzer.analyze_video(video_frame)
         
-        # Check for masking or flat affect
+        # Process through multi-agent orchestrator
+        orchestrated_response = await self.orchestrator.process(
+            video_frame=video_frame,
+            video_analysis=visual_analysis
+        )
+        
+        # Send emotion visualization update
+        await self._send_emotion_update(orchestrated_response)
+        
+        # Handle safety actions
+        if orchestrated_response.safety_action in ["offer_resources", "activate_safe_state", "emergency_escalation"]:
+            await self._handle_orchestrator_safety(orchestrated_response)
+        
+        # Send coaching feedback if appropriate
+        if orchestrated_response.should_coach and orchestrated_response.coaching_feedback:
+            await self._send_orchestrated_coaching(orchestrated_response)
+            
+        # Legacy: Check for masking or flat affect
         expression_state = visual_analysis.get("expression_state", {})
         if expression_state.get("masking_detected") or expression_state.get("flat_affect"):
             await self._provide_expression_coaching(visual_analysis)
@@ -199,6 +261,99 @@ class SessionHandler:
             detected_state=visual_analysis.get("dominant_emotion", "unknown"),
             raw_metrics=visual_analysis
         )
+        
+    async def _send_emotion_update(self, response: OrchestratedResponse) -> None:
+        """Send real-time emotion visualization data to client."""
+        emotion_data = {
+            "type": "emotion_update",
+            "emotion": response.emotion_state,
+            "trend": response.emotion_trend,
+            "congruenceScore": response.emotion_state.get("congruence_score", 1.0),
+            "maskingDetected": response.emotion_state.get("masking_detected", False),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        # Track emotion history
+        self.emotion_history.append({
+            "emotion": response.emotion_state.get("primary_emotion", "neutral"),
+            "intensity": response.emotion_state.get("intensity", 0.5),
+            "timestamp": datetime.utcnow().timestamp()
+        })
+        
+        # Limit history size
+        if len(self.emotion_history) > 100:
+            self.emotion_history = self.emotion_history[-100:]
+        
+        await self._send_to_client(emotion_data)
+        
+    async def _send_orchestrated_coaching(self, response: OrchestratedResponse) -> None:
+        """Send orchestrated coaching feedback to client."""
+        feedback = {
+            "type": "coaching_feedback",
+            "category": "orchestrated",
+            "observation": response.coaching_feedback.get("observation", ""),
+            "interpretation": response.coaching_feedback.get("interpretation", ""),
+            "suggestion": response.coaching_feedback.get("suggestion", ""),
+            "encouragement": response.coaching_feedback.get("encouragement", ""),
+            "technique": response.technique,
+            "citations": response.citations,
+            "urgency": "normal",
+            "grounded": bool(response.citations),
+            "agent_contributions": response.agent_contributions,
+            "processing_time_ms": response.processing_time_ms
+        }
+        
+        await self._send_to_client(feedback)
+        
+        self.coaching_history.append({
+            "timestamp": datetime.utcnow().isoformat(),
+            "feedback": feedback
+        })
+        
+        self.logger.log_coaching_feedback(
+            feedback_type="orchestrated",
+            suggestion=feedback.get("suggestion", ""),
+            urgency="normal"
+        )
+        
+    async def _handle_orchestrator_safety(self, response: OrchestratedResponse) -> None:
+        """Handle safety alerts from orchestrator."""
+        if response.safety_action == "emergency_escalation":
+            await self.activate_safe_state(
+                trigger_reason="orchestrator_crisis_detection",
+                distress_score=response.emotion_state.get("intensity", 1.0)
+            )
+        elif response.safety_action == "activate_safe_state":
+            await self.activate_safe_state(
+                trigger_reason="orchestrator_high_distress",
+                distress_score=response.emotion_state.get("intensity", 0.8)
+            )
+        elif response.safety_action == "offer_resources":
+            await self._send_to_client({
+                "type": "safety_resources",
+                "message": response.coaching_feedback.get("message") if response.coaching_feedback else "Help is available.",
+                "resources": response.safety_status.get("resources", []),
+                "urgency": "moderate"
+            })
+            
+    def _handle_safety_alert(self, assessment: SafetyAssessment) -> None:
+        """Callback for safety agent alerts."""
+        self.logger.warning(
+            f"Safety alert: {assessment.distress_level.value} - {assessment.recommended_action.value}"
+        )
+        
+    def _handle_mode_change(self, mode: OrchestratorMode) -> None:
+        """Callback for orchestrator mode changes."""
+        self.logger.info(f"Orchestrator mode changed to: {mode.value}")
+        
+        # Map orchestrator mode to session persona
+        mode_to_persona = {
+            OrchestratorMode.ACTIVE_COACHING: CoachingPersona.COACH,
+            OrchestratorMode.SUPPORTIVE: CoachingPersona.SUPPORT,
+            OrchestratorMode.OBSERVER: CoachingPersona.OBSERVER,
+            OrchestratorMode.SAFE_STATE: CoachingPersona.SUPPORT,
+        }
+        self.persona = mode_to_persona.get(mode, CoachingPersona.COACH)
         
     async def _provide_expression_coaching(self, analysis: dict) -> None:
         """Provide real-time coaching for facial expressions."""

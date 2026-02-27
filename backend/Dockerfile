@@ -11,7 +11,10 @@ RUN apt-get update && apt-get install -y \
     libsndfile1 \
     ffmpeg \
     libportaudio2 \
-    libgl1-mesa-glx \
+    portaudio19-dev \
+    libgl1 \
+    build-essential \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory

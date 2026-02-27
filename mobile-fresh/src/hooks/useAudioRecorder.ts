@@ -179,7 +179,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             // Read the audio file as base64
             // In production, this would be optimized to stream chunks
             const base64 = await FileSystem.readAsStringAsync(uri, {
-              encoding: 'base64',
+              encoding: FileSystem.EncodingType.Base64,
             });
             
             setAudioData(base64);

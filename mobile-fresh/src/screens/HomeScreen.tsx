@@ -13,7 +13,6 @@ import {
   SafeAreaView,
   Image,
   Dimensions,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -94,19 +93,15 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
           {/* Quick Actions */}
           <View style={styles.quickActions}>
-            <TouchableOpacity style={styles.quickAction} onPress={() => navigation.navigate('History')}>
+            <TouchableOpacity style={styles.quickAction}>
               <Ionicons name="time-outline" size={20} color="#8b8b8b" />
               <Text style={styles.quickActionText}>History</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickAction} onPress={() => navigation.navigate('Community')}>
-              <Ionicons name="people-outline" size={20} color="#8b8b8b" />
-              <Text style={styles.quickActionText}>Community</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.quickAction} onPress={() => navigation.navigate('Techniques')}>
+            <TouchableOpacity style={styles.quickAction}>
               <Ionicons name="book-outline" size={20} color="#8b8b8b" />
               <Text style={styles.quickActionText}>Techniques</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickAction} onPress={() => navigation.navigate('Help')}>
+            <TouchableOpacity style={styles.quickAction}>
               <Ionicons name="help-circle-outline" size={20} color="#8b8b8b" />
               <Text style={styles.quickActionText}>Help</Text>
             </TouchableOpacity>

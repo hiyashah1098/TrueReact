@@ -2,7 +2,7 @@
  * TrueReact - Settings Screen
  */
 
-import React, { useEffect, useCallback } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -10,102 +10,14 @@ import {
   TouchableOpacity,
   ScrollView,
   Switch,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '../context/AuthContext';
-
-const SETTINGS_KEY = '@truereact_settings';
-
-type Settings = {
-  hapticEnabled: boolean;
-  voiceCoaching: boolean;
-  safeStateEnabled: boolean;
-};
-
-const defaultSettings: Settings = {
-  hapticEnabled: true,
-  voiceCoaching: true,
-  safeStateEnabled: true,
-};
 
 export default function SettingsScreen() {
-  const { user, profile, signOut } = useAuth();
   const [hapticEnabled, setHapticEnabled] = React.useState(true);
   const [voiceCoaching, setVoiceCoaching] = React.useState(true);
   const [safeStateEnabled, setSafeStateEnabled] = React.useState(true);
-
-  // Load settings on mount
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(SETTINGS_KEY);
-      if (stored) {
-        const settings: Settings = JSON.parse(stored);
-        setHapticEnabled(settings.hapticEnabled);
-        setVoiceCoaching(settings.voiceCoaching);
-        setSafeStateEnabled(settings.safeStateEnabled);
-      }
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-    }
-  };
-
-  const saveSettings = useCallback(async (newSettings: Partial<Settings>) => {
-    try {
-      const current: Settings = {
-        hapticEnabled,
-        voiceCoaching,
-        safeStateEnabled,
-        ...newSettings,
-      };
-      await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(current));
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-    }
-  }, [hapticEnabled, voiceCoaching, safeStateEnabled]);
-
-  const handleHapticChange = (value: boolean) => {
-    setHapticEnabled(value);
-    saveSettings({ hapticEnabled: value });
-  };
-
-  const handleVoiceCoachingChange = (value: boolean) => {
-    setVoiceCoaching(value);
-    saveSettings({ voiceCoaching: value });
-  };
-
-  const handleSafeStateChange = (value: boolean) => {
-    setSafeStateEnabled(value);
-    saveSettings({ safeStateEnabled: value });
-  };
-
-  const handleClearData = () => {
-    Alert.alert(
-      'Clear Session Data',
-      'Are you sure you want to delete all coaching history? This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await AsyncStorage.removeItem('@truereact_history');
-              Alert.alert('Done', 'All session data has been cleared.');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to clear data.');
-            }
-          },
-        },
-      ]
-    );
-  };
 
   return (
     <LinearGradient
@@ -129,7 +41,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={voiceCoaching}
-              onValueChange={handleVoiceCoachingChange}
+              onValueChange={setVoiceCoaching}
               trackColor={{ false: '#3e3e5e', true: '#e94560' }}
               thumbColor="#fff"
             />
@@ -147,7 +59,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={hapticEnabled}
-              onValueChange={handleHapticChange}
+              onValueChange={setHapticEnabled}
               trackColor={{ false: '#3e3e5e', true: '#e94560' }}
               thumbColor="#fff"
             />
@@ -170,7 +82,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={safeStateEnabled}
-              onValueChange={handleSafeStateChange}
+              onValueChange={setSafeStateEnabled}
               trackColor={{ false: '#3e3e5e', true: '#4ade80' }}
               thumbColor="#fff"
             />
@@ -194,7 +106,7 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Privacy</Text>
           
-          <TouchableOpacity style={styles.settingItemButton} onPress={handleClearData}>
+          <TouchableOpacity style={styles.settingItemButton}>
             <View style={styles.settingInfo}>
               <Ionicons name="trash-outline" size={24} color="#e94560" />
               <View style={styles.settingText}>
@@ -232,40 +144,6 @@ export default function SettingsScreen() {
               Built for Hacklytics 2026
             </Text>
           </View>
-        </View>
-
-        {/* Account */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          
-          {user && (
-            <View style={styles.accountInfo}>
-              <Ionicons name="person-circle-outline" size={48} color="#e94560" />
-              <View style={styles.accountDetails}>
-                <Text style={styles.accountEmail}>{user.email}</Text>
-                <Text style={styles.accountStats}>
-                  {profile?.stats?.totalSessions || 0} sessions • {profile?.stats?.totalCoachingMoments || 0} coaching moments
-                </Text>
-              </View>
-            </View>
-          )}
-          
-          <TouchableOpacity 
-            style={styles.signOutButton}
-            onPress={() => {
-              Alert.alert(
-                'Sign Out',
-                'Are you sure you want to sign out?',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Sign Out', style: 'destructive', onPress: signOut },
-                ]
-              );
-            }}
-          >
-            <Ionicons name="log-out-outline" size={24} color="#ef4444" />
-            <Text style={styles.signOutText}>Sign Out</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </LinearGradient>
@@ -345,43 +223,5 @@ const styles = StyleSheet.create({
   copyright: {
     fontSize: 12,
     color: '#8b8b8b',
-  },
-  accountInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  accountDetails: {
-    marginLeft: 16,
-    flex: 1,
-  },
-  accountEmail: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  accountStats: {
-    fontSize: 13,
-    color: '#8b8b8b',
-  },
-  signOutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
-  },
-  signOutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ef4444',
-    marginLeft: 8,
   },
 });

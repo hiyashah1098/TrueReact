@@ -2,7 +2,7 @@
  * TrueReact - Session Screen
  * 
  * Main coaching session interface with real-time video/audio streaming,
- * emotion visualization, coaching feedback overlays, and barge-in interrupt capability.
+ * coaching feedback overlays, and barge-in interrupt capability.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -28,12 +28,8 @@ import * as Haptics from 'expo-haptics';
 import { RootStackParamList } from '../../App';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
-import { useAuth } from '../context/AuthContext';
-import { saveSession, CoachingFeedbackEntry } from '../services/firebase';
 import CoachingFeedbackOverlay from '../components/CoachingFeedbackOverlay';
 import InterruptModal from '../components/InterruptModal';
-import EmotionVisualizer, { EmotionState } from '../components/EmotionVisualizer';
-import EmotionTrendGraph, { EmotionDataPoint } from '../components/EmotionTrendGraph';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,7 +48,6 @@ type CoachingFeedback = {
 type SessionState = 'connecting' | 'active' | 'paused' | 'safe_state' | 'ended';
 
 export default function SessionScreen({ navigation }: SessionScreenProps) {
-  const { user } = useAuth();
   const [cameraPermission] = useCameraPermissions();
   const [sessionState, setSessionState] = useState<SessionState>('connecting');
   const [currentFeedback, setCurrentFeedback] = useState<CoachingFeedback | null>(null);
@@ -62,29 +57,14 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
   const [interruptResponse, setInterruptResponse] = useState<string | null>(null);
   const [sessionDuration, setSessionDuration] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [sessionStartTime] = useState<Date>(new Date());
-  const [safeStateTriggered, setSafeStateTriggered] = useState(false);
-  
-  // Emotion visualization state
-  const [emotionState, setEmotionState] = useState<EmotionState>({
-    primaryEmotion: 'neutral',
-    intensity: 0.5,
-    confidence: 0.5,
-    congruenceScore: 1.0,
-    maskingDetected: false,
-  });
-  const [emotionHistory, setEmotionHistory] = useState<EmotionDataPoint[]>([]);
-  const [showEmotionPanel, setShowEmotionPanel] = useState(true);
   
   const cameraRef = useRef<CameraView>(null);
   const feedbackAnim = useRef(new Animated.Value(0)).current;
   const processingAnim = useRef(new Animated.Value(0)).current;
-  const videoIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // WebSocket connection
   const { 
     isConnected, 
-    isDemoMode,
     sendMessage, 
     lastMessage,
     connect,
@@ -125,58 +105,6 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     return () => clearInterval(timer);
   }, [sessionState]);
 
-  // Demo mode feedback
-  useEffect(() => {
-    let demoTimer: NodeJS.Timeout | null = null;
-    let demoInterval: NodeJS.Timeout | null = null;
-    let emotionInterval: NodeJS.Timeout | null = null;
-
-    // Demo emotions for variety
-    const demoEmotions = ['happy', 'neutral', 'excited', 'calm', 'anxious', 'focused'];
-    
-    if (isDemoMode && sessionState === 'active') {
-      // Initial feedback after 5 seconds
-      demoTimer = setTimeout(() => {
-        const randomFeedback = demoFeedback[Math.floor(Math.random() * demoFeedback.length)];
-        handleCoachingFeedback({ ...randomFeedback, timestamp: Date.now() });
-      }, 5000);
-
-      // Recurring feedback every 10 seconds
-      demoInterval = setInterval(() => {
-        const randomFeedback = demoFeedback[Math.floor(Math.random() * demoFeedback.length)];
-        handleCoachingFeedback({ ...randomFeedback, timestamp: Date.now() });
-      }, 10000);
-
-      // Simulate emotion updates every 3 seconds
-      emotionInterval = setInterval(() => {
-        const randomEmotion = demoEmotions[Math.floor(Math.random() * demoEmotions.length)];
-        const intensity = 0.3 + Math.random() * 0.6; // 0.3 - 0.9
-        const congruence = 0.5 + Math.random() * 0.5; // 0.5 - 1.0
-        
-        handleEmotionUpdate({
-          emotion: {
-            primary_emotion: randomEmotion,
-            intensity: intensity,
-            confidence: 0.7 + Math.random() * 0.25,
-            congruence_score: congruence,
-            masking_detected: Math.random() < 0.1, // 10% chance
-          },
-          trend: {
-            trend: Math.random() > 0.5 ? 'increasing' : 'stable',
-            dominant_emotion: randomEmotion,
-            average_intensity: intensity,
-          },
-        });
-      }, 3000);
-    }
-
-    return () => {
-      if (demoTimer) clearTimeout(demoTimer);
-      if (demoInterval) clearInterval(demoInterval);
-      if (emotionInterval) clearInterval(emotionInterval);
-    };
-  }, [isDemoMode, sessionState]);
-
   // Send audio data when available
   useEffect(() => {
     if (audioData && isConnected) {
@@ -210,63 +138,9 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     }
   }, [isProcessing]);
 
-  // Demo mode feedback samples
-  const demoFeedback: CoachingFeedback[] = [
-    {
-      category: 'expression',
-      observation: 'Your eyebrows appear slightly raised',
-      suggestion: 'Try relaxing your forehead to appear more at ease',
-      urgency: 'low',
-      timestamp: Date.now(),
-    },
-    {
-      category: 'voice',
-      observation: 'Your speech pace seems a bit fast',
-      suggestion: 'Take a breath between sentences to slow down naturally',
-      urgency: 'normal',
-      timestamp: Date.now(),
-    },
-    {
-      category: 'general',
-      observation: 'Great eye contact!',
-      suggestion: 'Keep maintaining this natural connection',
-      urgency: 'low',
-      timestamp: Date.now(),
-    },
-    {
-      category: 'posture',
-      observation: 'Shoulders appear tense',
-      suggestion: 'Roll your shoulders back and relax',
-      urgency: 'normal',
-      timestamp: Date.now(),
-    },
-  ];
-
-  const startDemoFeedback = () => {
-    // Provide demo feedback every 8-12 seconds
-    const provideDemoFeedback = () => {
-      if (sessionState === 'active') {
-        const randomFeedback = demoFeedback[Math.floor(Math.random() * demoFeedback.length)];
-        handleCoachingFeedback({ ...randomFeedback, timestamp: Date.now() });
-      }
-    };
-
-    // Initial feedback after 5 seconds
-    setTimeout(provideDemoFeedback, 5000);
-    
-    // Recurring feedback
-    const interval = setInterval(() => {
-      if (sessionState === 'active') {
-        provideDemoFeedback();
-      }
-    }, 10000);
-
-    return () => clearInterval(interval);
-  };
-
   const initializeSession = async () => {
     try {
-      // Try to connect to backend (will enter demo mode if unavailable)
+      // Connect to backend
       await connect();
       
       // Start audio recording
@@ -276,33 +150,18 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
       startVideoCapture();
       
       setSessionState('active');
-      
-      // If in demo mode, start demo feedback
-      // Note: isDemoMode will be true if backend connection failed
     } catch (error) {
       console.error('Failed to initialize session:', error);
-      // Still allow session to start in demo mode
-      setSessionState('active');
     }
   };
 
   const cleanupSession = async () => {
-    // Clear video capture interval
-    if (videoIntervalRef.current) {
-      clearInterval(videoIntervalRef.current);
-      videoIntervalRef.current = null;
-    }
     await stopRecording();
     disconnect();
     setSessionState('ended');
   };
 
   const startVideoCapture = () => {
-    // Clear any existing interval
-    if (videoIntervalRef.current) {
-      clearInterval(videoIntervalRef.current);
-    }
-    
     // Capture video frames at regular intervals
     const captureFrame = async () => {
       if (cameraRef.current && sessionState === 'active') {
@@ -327,7 +186,9 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     };
 
     // Capture every 500ms
-    videoIntervalRef.current = setInterval(captureFrame, 500);
+    const frameInterval = setInterval(captureFrame, 500);
+    
+    return () => clearInterval(frameInterval);
   };
 
   const handleBackendMessage = (message: any) => {
@@ -338,9 +199,6 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
       case 'interrupt_response':
         handleInterruptResponse(message);
         break;
-      case 'emotion_update':
-        handleEmotionUpdate(message);
-        break;
       case 'safe_state_activated':
         handleSafeState(message);
         break;
@@ -348,55 +206,6 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
         handleSessionEnded(message);
         break;
     }
-  };
-  
-  const handleEmotionUpdate = (message: any) => {
-    // Update current emotion state
-    const newEmotionState: EmotionState = {
-      primaryEmotion: message.emotion?.primary_emotion || 'neutral',
-      intensity: message.emotion?.intensity || 0.5,
-      confidence: message.emotion?.confidence || 0.5,
-      congruenceScore: message.congruenceScore || message.emotion?.congruence_score || 1.0,
-      maskingDetected: message.maskingDetected || message.emotion?.masking_detected || false,
-      trend: message.trend ? {
-        trend: message.trend.trend || 'stable',
-        dominantEmotion: message.trend.dominant_emotion || 'neutral',
-        averageIntensity: message.trend.average_intensity || 0.5,
-      } : undefined,
-    };
-    
-    setEmotionState(newEmotionState);
-    
-    // Add to history for trend graph
-    const dataPoint: EmotionDataPoint = {
-      emotion: newEmotionState.primaryEmotion,
-      intensity: newEmotionState.intensity,
-      timestamp: Date.now(),
-    };
-    
-    setEmotionHistory(prev => {
-      const updated = [...prev, dataPoint];
-      // Keep last 30 data points for trend graph
-      return updated.slice(-30);
-    });
-    
-    // Haptic feedback for significant changes
-    if (newEmotionState.maskingDetected) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    if (newEmotionState.congruenceScore < 0.6) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-
-  const handleSafeState = (message: any) => {
-    setSessionState('safe_state');
-    setSafeStateTriggered(true);
-    navigation.replace('SafeState', { resources: message.resources });
-  };
-
-  const handleSessionEnded = (message: any) => {
-    setSessionState('ended');
   };
 
   const handleCoachingFeedback = (message: any) => {
@@ -441,6 +250,16 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     setIsProcessing(false);
   };
 
+  const handleSafeState = (message: any) => {
+    setSessionState('safe_state');
+    navigation.replace('SafeState', { resources: message.resources });
+  };
+
+  const handleSessionEnded = (message: any) => {
+    setSessionState('ended');
+    // Navigate to summary
+  };
+
   const handleBargeIn = () => {
     setShowInterruptModal(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -452,27 +271,11 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     setIsProcessing(true);
     setInterruptResponse(null);
 
-    if (isDemoMode) {
-      // Simulate response in demo mode
-      setTimeout(() => {
-        const demoResponses: Record<string, string> = {
-          'Did that sound sarcastic?': 'Based on your tone and expression, your delivery appeared sincere. Your eyebrows were relaxed and your voice had a warm quality.',
-          'Was I speaking too fast?': 'Your pace was moderate - about 140 words per minute, which is comfortable for conversation. You could slow down slightly for emphasis on key points.',
-          'Did my expression match my words?': 'Your facial expression aligned well with your message. I noticed genuine micro-expressions around your eyes that matched your verbal content.',
-          'How\'s my eye contact?': 'Your eye contact has been steady and natural - you\'re looking at the camera about 70% of the time, which creates good connection without being intense.',
-        };
-        const response = demoResponses[interruptQuestion] || 
-          'In demo mode, I can see you\'re practicing your social signals. Your expression appears engaged and your posture is open. Keep up the great work!';
-        setInterruptResponse(response);
-        setIsProcessing(false);
-      }, 1500);
-    } else {
-      sendMessage({
-        type: 'interrupt',
-        question: interruptQuestion,
-        timestamp: Date.now(),
-      });
-    }
+    sendMessage({
+      type: 'interrupt',
+      question: interruptQuestion,
+      timestamp: Date.now(),
+    });
   };
 
   const togglePause = () => {
@@ -487,36 +290,9 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     }
   };
 
-  const endSession = async () => {
+  const endSession = () => {
     sendMessage({ type: 'end' });
     cleanupSession();
-    
-    // Save session to Firestore
-    if (user && feedbackHistory.length > 0) {
-      try {
-        const sessionData = {
-          odId: user.uid,
-          startedAt: sessionStartTime,
-          endedAt: new Date(),
-          duration: sessionDuration,
-          feedbackCount: feedbackHistory.length,
-          feedback: feedbackHistory.map(f => ({
-            timestamp: new Date(f.timestamp),
-            category: f.category,
-            observation: f.observation,
-            suggestion: f.suggestion,
-            urgency: f.urgency,
-          })) as CoachingFeedbackEntry[],
-          calibrationMetrics: null,
-          safeStateTriggered,
-        };
-        await saveSession(user.uid, sessionData);
-        console.log('Session saved to Firestore');
-      } catch (error) {
-        console.error('Failed to save session:', error);
-      }
-    }
-    
     navigation.goBack();
   };
 
@@ -546,14 +322,9 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
                 { backgroundColor: sessionState === 'active' ? '#4ade80' : '#fbbf24' }
               ]} />
               <Text style={styles.statusText}>
-                {sessionState === 'active' ? (isDemoMode ? 'Demo' : 'Live') : 'Paused'}
+                {sessionState === 'active' ? 'Live' : 'Paused'}
               </Text>
             </View>
-            {isDemoMode && (
-              <View style={styles.demoBadge}>
-                <Text style={styles.demoBadgeText}>Offline Mode</Text>
-              </View>
-            )}
             <Text style={styles.duration}>{formatDuration(sessionDuration)}</Text>
           </View>
           
@@ -573,21 +344,6 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
             <View style={styles.processingDot} />
             <Text style={styles.processingText}>Analyzing...</Text>
           </Animated.View>
-        )}
-
-        {/* Emotion Visualizer Overlay */}
-        {showEmotionPanel && sessionState === 'active' && (
-          <TouchableOpacity 
-            style={styles.emotionOverlay}
-            onPress={() => setShowEmotionPanel(!showEmotionPanel)}
-            activeOpacity={0.9}
-          >
-            <EmotionVisualizer 
-              emotionState={emotionState}
-              showDetails={true}
-              size="medium"
-            />
-          </TouchableOpacity>
         )}
 
         {/* Coaching Feedback Overlay */}
@@ -705,18 +461,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  demoBadge: {
-    backgroundColor: 'rgba(251, 191, 36, 0.3)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginRight: 12,
-  },
-  demoBadgeText: {
-    color: '#fbbf24',
-    fontSize: 10,
-    fontWeight: '600',
-  },
   duration: {
     color: '#fff',
     fontSize: 16,
@@ -755,16 +499,6 @@ const styles = StyleSheet.create({
   processingText: {
     color: '#fff',
     fontSize: 12,
-  },
-  emotionOverlay: {
-    position: 'absolute',
-    top: 120,
-    right: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 16,
-    padding: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   bottomBar: {
     position: 'absolute',
