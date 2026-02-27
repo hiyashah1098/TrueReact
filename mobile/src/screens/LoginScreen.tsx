@@ -18,8 +18,25 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+
+// Neurodivergent-friendly colors
+const COLORS = {
+  background: '#1A1625',
+  surface: '#252136',
+  surfaceElevated: '#2D2845',
+  gold: '#F5A623',
+  goldDark: '#D4920D',
+  violet: '#9B7EC6',
+  violetLight: '#C4B0E0',
+  teal: '#4ECDC4',
+  text: '#F5F0E8',
+  textSecondary: '#B8B0C8',
+  textMuted: '#7A7290',
+  error: '#E07C7C',
+  success: '#7BC67E',
+};
 
 export default function LoginScreen() {
   const { signIn, signUp, isLoading, error, clearError } = useAuth();
@@ -69,7 +86,7 @@ export default function LoginScreen() {
 
   return (
     <LinearGradient
-      colors={['#1a1a2e', '#16213e', '#0f3460']}
+      colors={[COLORS.background, COLORS.surface, COLORS.surfaceElevated]}
       style={styles.container}
     >
       <KeyboardAvoidingView
@@ -80,26 +97,30 @@ export default function LoginScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo */}
+          {/* Logo with Infinity Symbol */}
           <View style={styles.logoContainer}>
             <View style={styles.logoCircle}>
-              <Ionicons name="pulse" size={48} color="#e94560" />
+              <MaterialCommunityIcons name="infinity" size={52} color={COLORS.gold} />
             </View>
             <Text style={styles.title}>TrueReact</Text>
             <Text style={styles.subtitle}>
               {isSignUp ? 'Create your account' : 'Welcome back'}
             </Text>
+            <View style={styles.tagline}>
+              <View style={styles.tagDot} />
+              <Text style={styles.tagText}>Neurodivergent-friendly coaching</Text>
+            </View>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
             {/* Email Input */}
             <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color="#8b8b8b" style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={20} color={COLORS.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Email"
-                placeholderTextColor="#6b6b8b"
+                placeholderTextColor={COLORS.textMuted}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -110,11 +131,11 @@ export default function LoginScreen() {
 
             {/* Password Input */}
             <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color="#8b8b8b" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={20} color={COLORS.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Password"
-                placeholderTextColor="#6b6b8b"
+                placeholderTextColor={COLORS.textMuted}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -127,7 +148,7 @@ export default function LoginScreen() {
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={20}
-                  color="#8b8b8b"
+                  color={COLORS.textMuted}
                 />
               </TouchableOpacity>
             </View>
@@ -135,11 +156,11 @@ export default function LoginScreen() {
             {/* Confirm Password (Sign Up only) */}
             {isSignUp && (
               <View style={styles.inputContainer}>
-                <Ionicons name="lock-closed-outline" size={20} color="#8b8b8b" style={styles.inputIcon} />
+                <Ionicons name="lock-closed-outline" size={20} color={COLORS.textMuted} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Confirm Password"
-                  placeholderTextColor="#6b6b8b"
+                  placeholderTextColor={COLORS.textMuted}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   secureTextEntry={!showPassword}
@@ -151,7 +172,7 @@ export default function LoginScreen() {
             {/* Error Message */}
             {error && (
               <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle-outline" size={16} color="#ef4444" />
+                <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
@@ -163,13 +184,14 @@ export default function LoginScreen() {
               disabled={isLoading}
             >
               <LinearGradient
-                colors={['#e94560', '#c23a51']}
+                colors={[COLORS.gold, COLORS.goldDark]}
                 style={styles.submitButtonGradient}
               >
                 {isLoading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <>
+                    <MaterialCommunityIcons name="infinity" size={20} color="#fff" style={{ marginRight: 8 }} />
                     <Text style={styles.submitButtonText}>
                       {isSignUp ? 'Create Account' : 'Sign In'}
                     </Text>
@@ -196,15 +218,15 @@ export default function LoginScreen() {
           <View style={styles.featuresPreview}>
             <Text style={styles.featuresTitle}>What you'll get:</Text>
             <View style={styles.featureItem}>
-              <Ionicons name="checkmark-circle" size={16} color="#4ade80" />
+              <Ionicons name="checkmark-circle" size={16} color={COLORS.teal} />
               <Text style={styles.featureText}>Real-time social signal coaching</Text>
             </View>
             <View style={styles.featureItem}>
-              <Ionicons name="checkmark-circle" size={16} color="#4ade80" />
+              <Ionicons name="checkmark-circle" size={16} color={COLORS.teal} />
               <Text style={styles.featureText}>AI-powered feedback on expressions & voice</Text>
             </View>
             <View style={styles.featureItem}>
-              <Ionicons name="checkmark-circle" size={16} color="#4ade80" />
+              <Ionicons name="checkmark-circle" size={16} color={COLORS.teal} />
               <Text style={styles.featureText}>Session history & progress tracking</Text>
             </View>
           </View>
@@ -234,20 +256,43 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(233, 69, 96, 0.1)',
+    backgroundColor: 'rgba(245, 166, 35, 0.12)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(245, 166, 35, 0.3)',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#fff',
+    color: COLORS.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#8b8b8b',
+    color: COLORS.textSecondary,
+    marginBottom: 12,
+  },
+  tagline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(155, 126, 198, 0.15)',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  tagDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.violet,
+    marginRight: 8,
+  },
+  tagText: {
+    fontSize: 12,
+    color: COLORS.violetLight,
+    fontWeight: '500',
   },
   form: {
     marginBottom: 32,
@@ -255,10 +300,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(45, 40, 69, 0.6)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(155, 126, 198, 0.2)',
     marginBottom: 16,
     paddingHorizontal: 16,
   },
@@ -268,7 +313,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: 56,
-    color: '#fff',
+    color: COLORS.text,
     fontSize: 16,
   },
   eyeButton: {
@@ -277,13 +322,13 @@ const styles = StyleSheet.create({
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: 'rgba(224, 124, 124, 0.1)',
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
   },
   errorText: {
-    color: '#ef4444',
+    color: COLORS.error,
     fontSize: 14,
     marginLeft: 8,
     flex: 1,
@@ -292,6 +337,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 16,
+    shadowColor: COLORS.gold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   submitButtonDisabled: {
     opacity: 0.7,
@@ -313,20 +363,22 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   toggleText: {
-    color: '#8b8b8b',
+    color: COLORS.textSecondary,
     fontSize: 14,
   },
   toggleTextBold: {
-    color: '#e94560',
+    color: COLORS.gold,
     fontWeight: '600',
   },
   featuresPreview: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: 'rgba(45, 40, 69, 0.6)',
     borderRadius: 12,
     padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(155, 126, 198, 0.1)',
   },
   featuresTitle: {
-    color: '#fff',
+    color: COLORS.text,
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 12,
@@ -337,7 +389,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   featureText: {
-    color: '#8b8b8b',
+    color: COLORS.textSecondary,
     fontSize: 13,
     marginLeft: 8,
   },
