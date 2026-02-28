@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     GOOGLE_SEARCH_GROUNDING_ENABLED: bool = True
     GROUNDING_DYNAMIC_THRESHOLD: float = 0.3
     
+    # Content Filter Settings (AUP Compliance)
+    CONTENT_FILTER_ENABLED: bool = True
+    CONTENT_FILTER_LOG_BLOCKED: bool = True
+    
     # CORS Settings
     ALLOWED_ORIGINS: List[str] = ["*"]
     

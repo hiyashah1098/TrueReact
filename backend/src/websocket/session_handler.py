@@ -17,6 +17,7 @@ from fastapi import WebSocket
 from src.services.gemini_live import GeminiLiveService
 from src.services.vertex_grounding import VertexGroundingService, EnhancedGroundingService
 from src.services.signal_analyzer import SignalAnalyzer
+from src.services.content_filter import get_content_filter
 from src.agents.orchestrator import AgentOrchestrator, OrchestratorMode, OrchestratedResponse
 from src.agents.safety_agent import SafetyAssessment, DistressLevel
 from src.config import settings
@@ -82,6 +83,9 @@ class SessionHandler:
         
         # Enhanced grounding service
         self.enhanced_grounding = EnhancedGroundingService()
+        
+        # Content filter for AUP compliance
+        self.content_filter = get_content_filter()
         
         # Coaching context
         self.coaching_history: list = []
@@ -288,13 +292,18 @@ class SessionHandler:
         
     async def _send_orchestrated_coaching(self, response: OrchestratedResponse) -> None:
         """Send orchestrated coaching feedback to client."""
+        # Filter coaching feedback for AUP compliance
+        filtered_feedback = self.content_filter.validate_coaching_feedback(
+            response.coaching_feedback
+        ) if settings.CONTENT_FILTER_ENABLED else response.coaching_feedback
+        
         feedback = {
             "type": "coaching_feedback",
             "category": "orchestrated",
-            "observation": response.coaching_feedback.get("observation", ""),
-            "interpretation": response.coaching_feedback.get("interpretation", ""),
-            "suggestion": response.coaching_feedback.get("suggestion", ""),
-            "encouragement": response.coaching_feedback.get("encouragement", ""),
+            "observation": filtered_feedback.get("observation", ""),
+            "interpretation": filtered_feedback.get("interpretation", ""),
+            "suggestion": filtered_feedback.get("suggestion", ""),
+            "encouragement": filtered_feedback.get("encouragement", ""),
             "technique": response.technique,
             "citations": response.citations,
             "urgency": "normal",

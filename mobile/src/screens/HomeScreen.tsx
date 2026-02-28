@@ -169,6 +169,49 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
               />
             </View>
 
+            {/* New Features Section */}
+            <Text style={styles.sectionTitle}>Explore</Text>
+            <View style={styles.quickActions}>
+              <QuickAction
+                icon="mic-outline"
+                label="Journal"
+                color="#7BC67E"
+                onPress={() => navigation.navigate('VoiceJournal')}
+              />
+              <QuickAction
+                icon="trophy-outline"
+                label="Badges"
+                color="#F5A623"
+                onPress={() => navigation.navigate('Achievements')}
+              />
+              <QuickAction
+                icon="leaf-outline"
+                label="Meditate"
+                color="#4ECDC4"
+                onPress={() => navigation.navigate('Meditation')}
+              />
+              <QuickAction
+                icon="albums-outline"
+                label="Replay"
+                color="#6B8DD6"
+                onPress={() => navigation.navigate('SessionReplay')}
+              />
+            </View>
+            <View style={styles.quickActions}>
+              <QuickAction
+                icon="sparkles-outline"
+                label="For You"
+                color="#9B7EC6"
+                onPress={() => navigation.navigate('PersonalizedTechniques')}
+              />
+              <QuickAction
+                icon="shield-checkmark-outline"
+                label="Safety"
+                color="#E74C3C"
+                onPress={() => navigation.navigate('Safety')}
+              />
+            </View>
+
             {/* Safety Note */}
             <View style={styles.safetyNote}>
               <Ionicons name="shield-checkmark" size={16} color={COLORS.teal} />
@@ -377,6 +420,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginRight: 8,
     letterSpacing: 0.5,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+    marginTop: 28,
+    marginBottom: -16,
+    paddingHorizontal: 4,
   },
   quickActions: {
     flexDirection: 'row',

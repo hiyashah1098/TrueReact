@@ -15,8 +15,31 @@ from google.genai import types
 
 from src.config import settings
 from src.utils.logging import get_logger
+from src.services.content_filter import get_content_filter, FilterAction
 
 logger = get_logger(__name__)
+
+
+# Safety settings for Gemini API - GCP AUP Compliance
+# Reference: https://cloud.google.com/terms/aup
+SAFETY_SETTINGS = [
+    types.SafetySetting(
+        category="HARM_CATEGORY_HARASSMENT",
+        threshold="BLOCK_MEDIUM_AND_ABOVE"
+    ),
+    types.SafetySetting(
+        category="HARM_CATEGORY_HATE_SPEECH",
+        threshold="BLOCK_MEDIUM_AND_ABOVE"
+    ),
+    types.SafetySetting(
+        category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
+        threshold="BLOCK_MEDIUM_AND_ABOVE"
+    ),
+    types.SafetySetting(
+        category="HARM_CATEGORY_DANGEROUS_CONTENT",
+        threshold="BLOCK_MEDIUM_AND_ABOVE"
+    ),
+]
 
 # Global client instance
 _client: Optional[genai.Client] = None
@@ -56,6 +79,7 @@ class GeminiLiveStream:
         self.on_coaching_feedback = on_coaching_feedback
         self.session = None
         self.is_active = False
+        self.content_filter = get_content_filter()
         
         # System instruction for the coaching agent
         self.system_instruction = """You are TrueReact, a real-time social-emotional coach.

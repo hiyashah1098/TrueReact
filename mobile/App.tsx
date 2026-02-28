@@ -25,6 +25,14 @@ import HelpScreen from './src/screens/HelpScreen';
 import CommunityScreen from './src/screens/CommunityScreen';
 import ChatScreen from './src/screens/ChatScreen';
 
+// New Feature Screens
+import VoiceJournalScreen from './src/screens/VoiceJournalScreen';
+import AchievementsScreen from './src/screens/AchievementsScreen';
+import MeditationScreen from './src/screens/MeditationScreen';
+import SessionReplayScreen from './src/screens/SessionReplayScreen';
+import PersonalizedTechniquesScreen from './src/screens/PersonalizedTechniquesScreen';
+import SafetyScreen from './src/screens/SafetyScreen';
+
 // Context Providers
 import { SessionProvider } from './src/context/SessionContext';
 import { ThemeProvider } from './src/context/ThemeContext';
@@ -43,6 +51,13 @@ export type RootStackParamList = {
   Help: undefined;
   Community: undefined;
   Chat: { conversationId: string; otherUserId: string; displayName: string };
+  // New Feature Routes
+  VoiceJournal: undefined;
+  Achievements: undefined;
+  Meditation: { meditationId?: string } | undefined;
+  SessionReplay: { sessionId?: string } | undefined;
+  PersonalizedTechniques: { emotion?: string } | undefined;
+  Safety: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -155,6 +170,56 @@ function AppNavigator() {
               component={ChatScreen}
               options={{ 
                 title: 'Chat',
+                headerShown: false 
+              }}
+            />
+            
+            {/* New Feature Screens */}
+            <Stack.Screen 
+              name="VoiceJournal" 
+              component={VoiceJournalScreen}
+              options={{ 
+                title: 'Voice Journal',
+                headerShown: false 
+              }}
+            />
+            <Stack.Screen 
+              name="Achievements" 
+              component={AchievementsScreen}
+              options={{ 
+                title: 'Achievements',
+                headerShown: false 
+              }}
+            />
+            <Stack.Screen 
+              name="Meditation" 
+              component={MeditationScreen}
+              options={{ 
+                title: 'Meditation',
+                headerShown: false 
+              }}
+            />
+            <Stack.Screen 
+              name="SessionReplay" 
+              component={SessionReplayScreen}
+              options={{ 
+                title: 'Session Replay',
+                headerShown: false 
+              }}
+            />
+            <Stack.Screen 
+              name="PersonalizedTechniques" 
+              component={PersonalizedTechniquesScreen}
+              options={{ 
+                title: 'For You',
+                headerShown: false 
+              }}
+            />
+            <Stack.Screen 
+              name="Safety" 
+              component={SafetyScreen}
+              options={{ 
+                title: 'Safety',
                 headerShown: false 
               }}
             />

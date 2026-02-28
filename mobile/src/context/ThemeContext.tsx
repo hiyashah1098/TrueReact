@@ -8,10 +8,13 @@
  * - Warm backgrounds: Sensory-friendly, low-contrast
  */
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ThemeMode = 'light' | 'dark' | 'system';
+
+const THEME_STORAGE_KEY = '@truereact_theme_mode';
 
 type ThemeColors = {
   // Core backgrounds
@@ -140,13 +143,47 @@ type ThemeContextType = {
   isDark: boolean;
   colors: ThemeColors;
   setThemeMode: (mode: ThemeMode) => void;
+  toggleTheme: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemColorScheme = useColorScheme();
-  const [themeMode, setThemeMode] = useState<ThemeMode>('dark'); // Default to dark for this app
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('dark'); // Default to dark for this app
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load saved theme on mount
+  useEffect(() => {
+    loadSavedTheme();
+  }, []);
+
+  const loadSavedTheme = async () => {
+    try {
+      const saved = await AsyncStorage.getItem(THEME_STORAGE_KEY);
+      if (saved && ['light', 'dark', 'system'].includes(saved)) {
+        setThemeModeState(saved as ThemeMode);
+      }
+    } catch (error) {
+      console.error('Failed to load theme:', error);
+    } finally {
+      setIsLoaded(true);
+    }
+  };
+
+  const setThemeMode = useCallback(async (mode: ThemeMode) => {
+    setThemeModeState(mode);
+    try {
+      await AsyncStorage.setItem(THEME_STORAGE_KEY, mode);
+    } catch (error) {
+      console.error('Failed to save theme:', error);
+    }
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    const nextMode = themeMode === 'dark' ? 'light' : 'dark';
+    setThemeMode(nextMode);
+  }, [themeMode, setThemeMode]);
 
   const isDark = themeMode === 'system' 
     ? systemColorScheme === 'dark' 
@@ -159,6 +196,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     isDark,
     colors,
     setThemeMode,
+    toggleTheme,
   };
 
   return (

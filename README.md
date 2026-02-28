@@ -173,7 +173,12 @@ TrueReact/
 │   │   │   ├── CoachingFeedbackOverlay.tsx  # Real-time coaching UI
 │   │   │   ├── EmotionVisualizer.tsx        # Animated emotion ring
 │   │   │   ├── EmotionTrendGraph.tsx        # Emotion history chart
-│   │   │   └── InterruptModal.tsx           # Barge-in question modal
+│   │   │   ├── InterruptModal.tsx           # Barge-in question modal
+│   │   │   ├── AffirmationCard.tsx          # Daily affirmation display
+│   │   │   ├── BadgeUnlockNotification.tsx  # Achievement unlock animation
+│   │   │   ├── MoodCheckIn.tsx              # Quick mood selector
+│   │   │   ├── SessionTimer.tsx             # Session duration tracker
+│   │   │   └── TechniqueBookmarks.tsx       # Bookmarked techniques
 │   │   ├── screens/
 │   │   │   ├── HomeScreen.tsx               # Main dashboard
 │   │   │   ├── SessionScreen.tsx            # Live coaching session
@@ -181,16 +186,33 @@ TrueReact/
 │   │   │   ├── SafeStateScreen.tsx          # Crisis support screen
 │   │   │   ├── HistoryScreen.tsx            # Session history
 │   │   │   ├── TechniquesScreen.tsx         # CBT/DBT techniques library
-│   │   │   └── SettingsScreen.tsx           # User preferences
+│   │   │   ├── SettingsScreen.tsx           # User preferences
+│   │   │   ├── VoiceJournalScreen.tsx       # Voice journaling
+│   │   │   ├── AchievementsScreen.tsx       # Badges & streaks
+│   │   │   ├── MeditationScreen.tsx         # Guided meditations
+│   │   │   ├── SessionReplayScreen.tsx      # Review past sessions
+│   │   │   ├── PersonalizedTechniquesScreen.tsx # AI recommendations
+│   │   │   └── SafetyScreen.tsx             # Crisis prevention & contacts
 │   │   ├── hooks/
 │   │   │   ├── useWebSocket.ts              # WebSocket connection
-│   │   │   └── useAudioRecorder.ts          # Audio capture
+│   │   │   ├── useAudioRecorder.ts          # Audio capture
+│   │   │   ├── useSessionTimer.ts           # Session timing
+│   │   │   └── useVoiceJournal.ts           # Journal management
 │   │   ├── context/
 │   │   │   ├── SessionContext.tsx           # Session state management
 │   │   │   ├── AuthContext.tsx              # Firebase auth
 │   │   │   └── ThemeContext.tsx             # Theme preferences
 │   │   └── services/
-│   │       └── firebase.ts                  # Firebase integration
+│   │       ├── firebase.ts                  # Firebase integration
+│   │       ├── voiceJournal.ts              # Journal storage & transcription
+│   │       ├── gamification.ts              # Streaks, badges, XP system
+│   │       ├── meditation.ts                # Meditation library
+│   │       ├── sessionHistory.ts            # Session replay data
+│   │       ├── recommendations.ts           # Technique recommendation engine
+│   │       ├── safety.ts                    # Crisis contacts & safety plan
+│   │       ├── affirmations.ts              # Daily affirmations
+│   │       ├── techniqueBookmarks.ts        # Saved techniques
+│   │       └── sessionExport.ts             # Export session data
 │   └── app.json
 ├── backend/                    # FastAPI Cloud Run service
 │   ├── src/
@@ -255,6 +277,56 @@ TrueReact implements comprehensive **Safe-State Logic** via the SafetyAgent:
 6. **Privacy-First**: On-device processing where possible, encrypted streams
 7. **Demo Mode**: Full functionality offline for hackathon demonstrations
 
+## 📱 Feature Highlights
+
+### 🎤 Voice Journal with Transcription
+Record voice entries for emotional reflection with automatic transcription:
+- Audio recording with waveform visualization
+- Speech-to-text transcription via Web Speech API
+- Emotion tagging for each entry
+- Journal analytics with word clouds and trends
+- Export and share functionality
+
+### 🏆 Progress Streaks & Badges
+Gamified achievement system to encourage consistent practice:
+- Daily streak tracking with calendar heat map
+- 20+ unlockable badges across 4 categories (Streaks, Sessions, Techniques, Community)
+- Progress tracking with celebration animations
+- Rarity tiers: Common, Rare, Epic, Legendary
+
+### 🧘 Guided Meditation Library
+Curated meditation sessions for emotional wellness:
+- Sessions organized by category (Stress, Anxiety, Sleep, Focus, Emotion)
+- Duration filtering (5-30 minutes)
+- Audio playback with progress tracking
+- Favorites and history management
+- Streak integration for completed sessions
+
+### 📊 Session Replay with Insights
+Review past coaching sessions with detailed analytics:
+- Emotion timeline visualization with journey view
+- Coaching moments and breakthroughs highlighted
+- Session statistics and trends
+- AI-generated insights from patterns
+- Star rating for session feedback
+
+### 💡 Personalized Technique Recommendations
+ML-inspired recommendation engine for techniques:
+- 20+ techniques across 7 categories
+- Personalized scoring based on success rates
+- Time-of-day and emotional state optimization
+- Step-by-step practice walkthroughs
+- Analytics on technique effectiveness
+
+### 🚨 Crisis Prevention & Safety Contacts
+Comprehensive safety features for emergency situations:
+- One-tap 988 Suicide & Crisis Lifeline access
+- ICE (In Case of Emergency) contact management
+- Customizable safety plan builder
+- 5-4-3-2-1 grounding exercises
+- Crisis resource directory
+- Pattern analysis for early intervention
+
 ## 🎮 Demo Mode
 
 TrueReact includes a fully-functional **offline demo mode** for presentations:
@@ -265,7 +337,66 @@ TrueReact includes a fully-functional **offline demo mode** for presentations:
 - Shows congruence tracking and masking detection
 - Works without backend connection
 
-## 📄 License
+## � Third-Party Integrations
+
+TrueReact uses the following third-party tools and libraries in accordance with their respective licenses:
+
+| Integration | Purpose | License |
+|-------------|---------|---------|
+| **Google Gemini API** | Multimodal AI processing via Live API | Google Cloud Terms |
+| **Google GenAI SDK** | Python SDK for Gemini interactions | Apache 2.0 |
+| **Google ADK** | Agent Development Kit for multi-agent orchestration | Apache 2.0 |
+| **Vertex AI Search** | Evidence-based grounding for CBT/DBT techniques | Google Cloud Terms |
+| **Google Cloud Logging** | Observability and structured logging | Google Cloud Terms |
+| **Firebase Auth** | User authentication | Firebase Terms |
+| **Firebase Firestore** | User data and session storage | Firebase Terms |
+| **FastAPI** | Backend web framework | MIT |
+| **React Native** | Mobile app framework | MIT |
+| **Expo SDK 54** | React Native development platform | MIT |
+| **NumPy/SciPy** | Signal processing | BSD |
+| **librosa** | Audio analysis | ISC |
+| **OpenCV** | Video frame processing | Apache 2.0 |
+
+All third-party integrations are used in compliance with their licensing terms.
+
+## ✅ GCP Acceptable Use Policy Compliance
+
+TrueReact is designed to comply with the [Google Cloud Acceptable Use Policy](https://cloud.google.com/terms/aup):
+
+### Content Safety Measures
+
+1. **Gemini Safety Settings**: All API calls include safety settings to block:
+   - Harassment content
+   - Hate speech
+   - Sexually explicit content
+   - Dangerous content
+
+2. **Local Content Filter**: Pre-filters user inputs and AI outputs for:
+   - Harassment and bullying
+   - Hate speech patterns
+   - Dangerous activity requests
+   - Malware/phishing content
+
+3. **SafetyAgent**: Dedicated ADK agent monitors for:
+   - Crisis keywords and distress signals
+   - Risk assessment and escalation
+   - Safe-state activation when needed
+
+### Privacy & Data Handling
+
+- Audio/video streams processed in real-time, not stored
+- No PII stored without explicit consent
+- Session data encrypted in transit (TLS 1.3)
+- User consent required for camera/microphone access
+
+### Prohibited Use Prevention
+
+- No medical advice provided
+- Professional help encouraged when appropriate
+- Crisis resources provided for distress situations
+- Content filtering prevents harmful output generation
+
+## �📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
 

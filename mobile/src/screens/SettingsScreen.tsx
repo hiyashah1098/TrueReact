@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const SETTINGS_KEY = '@truereact_settings';
 
@@ -33,6 +34,7 @@ const defaultSettings: Settings = {
 
 export default function SettingsScreen() {
   const { user, profile, signOut } = useAuth();
+  const { isDark, themeMode, setThemeMode, colors } = useTheme();
   const [hapticEnabled, setHapticEnabled] = React.useState(true);
   const [voiceCoaching, setVoiceCoaching] = React.useState(true);
   const [safeStateEnabled, setSafeStateEnabled] = React.useState(true);
@@ -152,6 +154,53 @@ export default function SettingsScreen() {
               thumbColor="#fff"
             />
           </View>
+        </View>
+
+        {/* Appearance Settings */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Appearance</Text>
+          
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Ionicons 
+                name={isDark ? "moon-outline" : "sunny-outline"} 
+                size={24} 
+                color="#FFD166" 
+              />
+              <View style={styles.settingText}>
+                <Text style={styles.settingTitle}>Dark Mode</Text>
+                <Text style={styles.settingDescription}>
+                  {isDark ? 'Warm dark theme active' : 'Light cream theme active'}
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={isDark}
+              onValueChange={() => setThemeMode(isDark ? 'light' : 'dark')}
+              trackColor={{ false: '#3e3e5e', true: '#FFD166' }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <TouchableOpacity 
+            style={styles.settingItemButton}
+            onPress={() => setThemeMode('system')}
+          >
+            <View style={styles.settingInfo}>
+              <Ionicons name="phone-portrait-outline" size={24} color="#9B7EC6" />
+              <View style={styles.settingText}>
+                <Text style={styles.settingTitle}>Use System Theme</Text>
+                <Text style={styles.settingDescription}>
+                  {themeMode === 'system' ? '✓ Active' : 'Match device settings'}
+                </Text>
+              </View>
+            </View>
+            <Ionicons 
+              name={themeMode === 'system' ? "checkmark-circle" : "chevron-forward"} 
+              size={20} 
+              color={themeMode === 'system' ? "#4ECDC4" : "#7A7290"} 
+            />
+          </TouchableOpacity>
         </View>
 
         {/* Safety Settings */}
