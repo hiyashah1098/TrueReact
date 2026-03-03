@@ -79,7 +79,7 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
   const cameraRef = useRef<CameraView>(null);
   const feedbackAnim = useRef(new Animated.Value(0)).current;
   const processingAnim = useRef(new Animated.Value(0)).current;
-  const videoIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const videoIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // WebSocket connection
   const { 
@@ -116,7 +116,7 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
 
   // Session timer
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setInterval>;
     if (sessionState === 'active') {
       timer = setInterval(() => {
         setSessionDuration(prev => prev + 1);
@@ -127,9 +127,9 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
 
   // Demo mode feedback
   useEffect(() => {
-    let demoTimer: NodeJS.Timeout | null = null;
-    let demoInterval: NodeJS.Timeout | null = null;
-    let emotionInterval: NodeJS.Timeout | null = null;
+    let demoTimer: ReturnType<typeof setTimeout> | null = null;
+    let demoInterval: ReturnType<typeof setInterval> | null = null;
+    let emotionInterval: ReturnType<typeof setInterval> | null = null;
 
     // Demo emotions for variety
     const demoEmotions = ['happy', 'neutral', 'excited', 'calm', 'anxious', 'focused'];

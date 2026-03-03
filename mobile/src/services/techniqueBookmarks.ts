@@ -9,8 +9,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const BOOKMARKS_STORAGE_KEY = '@truereact_technique_bookmarks';
 const RECENT_TECHNIQUES_KEY = '@truereact_recent_techniques';
 
-export type TechniqueBookmark = {
-  techniqueId: string;
+export type TechniqueType = {
+  id: string;
+  name: string;
+  type: string;
+  category: string;
+  description: string;
+};
+
+export type BookmarkedTechnique = {
+  technique: TechniqueType;
   bookmarkedAt: string;
   notes?: string;
   usageCount: number;
@@ -26,7 +34,7 @@ export type RecentTechnique = {
 /**
  * Get all bookmarked techniques
  */
-export async function getBookmarkedTechniques(): Promise<TechniqueBookmark[]> {
+export async function getBookmarks(): Promise<BookmarkedTechnique[]> {
   try {
     const stored = await AsyncStorage.getItem(BOOKMARKS_STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
@@ -40,27 +48,27 @@ export async function getBookmarkedTechniques(): Promise<TechniqueBookmark[]> {
  * Check if a technique is bookmarked
  */
 export async function isBookmarked(techniqueId: string): Promise<boolean> {
-  const bookmarks = await getBookmarkedTechniques();
-  return bookmarks.some(b => b.techniqueId === techniqueId);
+  const bookmarks = await getBookmarks();
+  return bookmarks.some(b => b.technique.id === techniqueId);
 }
 
 /**
  * Add a technique to bookmarks
  */
 export async function addBookmark(
-  techniqueId: string, 
+  technique: TechniqueType,
   notes?: string
-): Promise<void> {
+): Promise<BookmarkedTechnique[]> {
   try {
-    const bookmarks = await getBookmarkedTechniques();
+    const bookmarks = await getBookmarks();
     
     // Check if already bookmarked
-    if (bookmarks.some(b => b.techniqueId === techniqueId)) {
-      return;
+    if (bookmarks.some(b => b.technique.id === technique.id)) {
+      return bookmarks;
     }
 
-    const newBookmark: TechniqueBookmark = {
-      techniqueId,
+    const newBookmark: BookmarkedTechnique = {
+      technique,
       bookmarkedAt: new Date().toISOString(),
       notes,
       usageCount: 0,
@@ -68,6 +76,7 @@ export async function addBookmark(
 
     bookmarks.push(newBookmark);
     await AsyncStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(bookmarks));
+    return bookmarks;
   } catch (error) {
     console.error('Failed to add bookmark:', error);
     throw error;
@@ -77,11 +86,12 @@ export async function addBookmark(
 /**
  * Remove a technique from bookmarks
  */
-export async function removeBookmark(techniqueId: string): Promise<void> {
+export async function removeBookmark(techniqueId: string): Promise<BookmarkedTechnique[]> {
   try {
-    const bookmarks = await getBookmarkedTechniques();
-    const filtered = bookmarks.filter(b => b.techniqueId !== techniqueId);
+    const bookmarks = await getBookmarks();
+    const filtered = bookmarks.filter(b => b.technique.id !== techniqueId);
     await AsyncStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(filtered));
+    return filtered;
   } catch (error) {
     console.error('Failed to remove bookmark:', error);
     throw error;
@@ -89,20 +99,17 @@ export async function removeBookmark(techniqueId: string): Promise<void> {
 }
 
 /**
- * Toggle bookmark status
+ * Toggle bookmark status, returns updated bookmarks list
  */
 export async function toggleBookmark(
-  techniqueId: string,
-  notes?: string
-): Promise<boolean> {
-  const bookmarked = await isBookmarked(techniqueId);
+  technique: TechniqueType
+): Promise<BookmarkedTechnique[]> {
+  const bookmarked = await isBookmarked(technique.id);
   
   if (bookmarked) {
-    await removeBookmark(techniqueId);
-    return false;
+    return removeBookmark(technique.id);
   } else {
-    await addBookmark(techniqueId, notes);
-    return true;
+    return addBookmark(technique);
   }
 }
 
@@ -114,8 +121,8 @@ export async function updateBookmarkNotes(
   notes: string
 ): Promise<void> {
   try {
-    const bookmarks = await getBookmarkedTechniques();
-    const index = bookmarks.findIndex(b => b.techniqueId === techniqueId);
+    const bookmarks = await getBookmarks();
+    const index = bookmarks.findIndex(b => b.technique.id === techniqueId);
     
     if (index !== -1) {
       bookmarks[index].notes = notes;
@@ -136,8 +143,8 @@ export async function recordTechniqueUsage(
 ): Promise<void> {
   try {
     // Update bookmark usage count if bookmarked
-    const bookmarks = await getBookmarkedTechniques();
-    const bookmarkIndex = bookmarks.findIndex(b => b.techniqueId === techniqueId);
+    const bookmarks = await getBookmarks();
+    const bookmarkIndex = bookmarks.findIndex(b => b.technique.id === techniqueId);
     
     if (bookmarkIndex !== -1) {
       bookmarks[bookmarkIndex].usageCount += 1;
@@ -166,7 +173,7 @@ export async function recordTechniqueUsage(
 /**
  * Get recently used techniques
  */
-export async function getRecentTechniques(): Promise<RecentTechnique[]> {
+export async function getRecentlyUsedTechniques(): Promise<RecentTechnique[]> {
   try {
     const stored = await AsyncStorage.getItem(RECENT_TECHNIQUES_KEY);
     return stored ? JSON.parse(stored) : [];
@@ -179,8 +186,8 @@ export async function getRecentTechniques(): Promise<RecentTechnique[]> {
 /**
  * Get most used bookmarked techniques (sorted by usage)
  */
-export async function getMostUsedTechniques(limit: number = 5): Promise<TechniqueBookmark[]> {
-  const bookmarks = await getBookmarkedTechniques();
+export async function getMostUsedTechniques(limit: number = 5): Promise<BookmarkedTechnique[]> {
+  const bookmarks = await getBookmarks();
   return bookmarks
     .sort((a, b) => b.usageCount - a.usageCount)
     .slice(0, limit);
@@ -202,7 +209,7 @@ export async function clearAllBookmarks(): Promise<void> {
  * Export bookmarks data (for backup/sharing)
  */
 export async function exportBookmarksData(): Promise<string> {
-  const bookmarks = await getBookmarkedTechniques();
+  const bookmarks = await getBookmarks();
   return JSON.stringify(bookmarks, null, 2);
 }
 
@@ -211,15 +218,15 @@ export async function exportBookmarksData(): Promise<string> {
  */
 export async function importBookmarksData(jsonData: string): Promise<number> {
   try {
-    const imported: TechniqueBookmark[] = JSON.parse(jsonData);
-    const existing = await getBookmarkedTechniques();
+    const imported: BookmarkedTechnique[] = JSON.parse(jsonData);
+    const existing = await getBookmarks();
     
     // Merge, avoiding duplicates
     const merged = [...existing];
     let addedCount = 0;
     
     for (const bookmark of imported) {
-      if (!merged.some(b => b.techniqueId === bookmark.techniqueId)) {
+      if (!merged.some(b => b.technique.id === bookmark.technique.id)) {
         merged.push(bookmark);
         addedCount++;
       }
@@ -234,14 +241,14 @@ export async function importBookmarksData(jsonData: string): Promise<number> {
 }
 
 export default {
-  getBookmarkedTechniques,
+  getBookmarks,
   isBookmarked,
   addBookmark,
   removeBookmark,
   toggleBookmark,
   updateBookmarkNotes,
   recordTechniqueUsage,
-  getRecentTechniques,
+  getRecentlyUsedTechniques,
   getMostUsedTechniques,
   clearAllBookmarks,
   exportBookmarksData,
