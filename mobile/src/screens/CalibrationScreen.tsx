@@ -115,7 +115,7 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
       // Countdown for this step
       for (let j = step.duration; j > 0; j--) {
         setCountdown(j);
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise<void>(resolve => setTimeout(resolve, 1000));
       }
       
       // Update progress

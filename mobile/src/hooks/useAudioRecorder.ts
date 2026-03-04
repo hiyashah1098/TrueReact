@@ -55,7 +55,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const [error, setError] = useState<string | null>(null);
 
   const recordingRef = useRef<Audio.Recording | null>(null);
-  const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const chunkIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Initialize audio session
   useEffect(() => {

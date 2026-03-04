@@ -49,8 +49,8 @@ export function useSessionTimer(customSettings?: Partial<TimerSettings>) {
   const [breathingSeconds, setBreathingSeconds] = useState(BREATHING_PATTERN.inhale);
   const [breathingCycles, setBreathingCycles] = useState(0);
   
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const breathingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const breathingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Clear interval on unmount
   useEffect(() => {

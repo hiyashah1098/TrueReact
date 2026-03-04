@@ -56,8 +56,8 @@ export function useVoiceJournal(options: UseVoiceJournalOptions = {}): UseVoiceJ
   const [audioLevels, setAudioLevels] = useState<number[]>([]);
 
   const recordingRef = useRef<Audio.Recording | null>(null);
-  const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const levelIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const levelIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
   const pausedDurationRef = useRef<number>(0);
 
@@ -314,7 +314,7 @@ export function useVoiceJournal(options: UseVoiceJournalOptions = {}): UseVoiceJ
 // Simulate transcription (placeholder for actual Speech-to-Text)
 async function simulateTranscription(durationSeconds: number): Promise<string> {
   // Simulate processing time based on duration
-  await new Promise(resolve => setTimeout(resolve, Math.min(durationSeconds * 50, 3000)));
+  await new Promise<void>(resolve => setTimeout(resolve, Math.min(durationSeconds * 50, 3000)));
   
   // In production, this would call:
   // - Google Cloud Speech-to-Text
