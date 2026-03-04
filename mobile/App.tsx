@@ -11,8 +11,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, ActivityIndicator, View } from 'react-native';
+import { StyleSheet, ActivityIndicator, View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFonts } from 'expo-font';
 
 // Screens
 import HomeScreen from './src/screens/HomeScreen';
@@ -274,6 +275,21 @@ function AppNavigator() {
 }
 
 export default function App() {
+  // Load Ionicons font for web compatibility
+  const [fontsLoaded] = useFonts({
+    ...Ionicons.font,
+  });
+
+  // Show loading screen while fonts are loading
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#9B7EC6" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
@@ -298,5 +314,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#1a1a2e',
+  },
+  loadingText: {
+    color: '#9B7EC6',
+    marginTop: 12,
+    fontSize: 16,
   },
 });
