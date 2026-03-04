@@ -36,6 +36,7 @@ import {
   UserPreferences,
 } from '../services/recommendations';
 import { recordActivity } from '../services/gamification';
+import { useTheme } from '../context/ThemeContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -53,6 +54,7 @@ const EMOTION_OPTIONS = [
 type ViewMode = 'recommendations' | 'browse' | 'analytics';
 
 export default function TechniquesScreen({ navigation }: any) {
+  const { colors, isDark } = useTheme();
   const [viewMode, setViewMode] = useState<ViewMode>('recommendations');
   const [selectedEmotion, setSelectedEmotion] = useState('anxious');
   const [recommendations, setRecommendations] = useState<TechniqueRecommendation[]>([]);
@@ -608,29 +610,30 @@ export default function TechniquesScreen({ navigation }: any) {
   
   if (loading && !refreshing) {
     return (
-      <View style={styles.loadingContainer}>
-        <Ionicons name="hourglass-outline" size={48} color="#9B7EC6" />
-        <Text style={styles.loadingText}>Finding the best techniques...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <Ionicons name="hourglass-outline" size={48} color={colors.secondary} />
+        <Text style={[styles.loadingText, { color: colors.textMuted }]}>Finding the best techniques...</Text>
       </View>
     );
   }
   
+  // Dynamic card styling
+  const cardBg = isDark ? 'rgba(45, 40, 69, 0.6)' : '#FFFFFF';
+  
   return (
-    <LinearGradient colors={['#F8F7FC', '#EDE9F8']} style={styles.container}>
+    <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#2D2D44" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Techniques</Text>
+          <View style={{ width: 24 }} />
+          <Text style={[styles.title, { color: colors.text }]}>For You</Text>
           <TouchableOpacity onPress={() => setShowPrefsModal(true)}>
-            <Ionicons name="options-outline" size={24} color="#9B7EC6" />
+            <Ionicons name="options-outline" size={24} color={colors.secondary} />
           </TouchableOpacity>
         </View>
         
         {/* View Toggle */}
-        <View style={styles.viewToggle}>
+        <View style={[styles.viewToggle, { backgroundColor: isDark ? 'rgba(45, 40, 69, 0.6)' : 'rgba(155, 126, 198, 0.1)' }]}>
           {(['recommendations', 'browse', 'analytics'] as ViewMode[]).map((mode) => (
             <TouchableOpacity
               key={mode}
@@ -644,9 +647,9 @@ export default function TechniquesScreen({ navigation }: any) {
                   'analytics-outline'
                 } 
                 size={16} 
-                color={viewMode === mode ? '#FFFFFF' : '#9B7EC6'} 
+                color={viewMode === mode ? '#FFFFFF' : colors.secondary} 
               />
-              <Text style={[styles.toggleText, viewMode === mode && styles.toggleTextActive]}>
+              <Text style={[styles.toggleText, { color: colors.secondary }, viewMode === mode && styles.toggleTextActive]}>
                 {mode === 'recommendations' ? 'For You' : mode === 'browse' ? 'Browse' : 'Stats'}
               </Text>
             </TouchableOpacity>
@@ -657,12 +660,12 @@ export default function TechniquesScreen({ navigation }: any) {
           <ScrollView 
             style={styles.recContainer}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.secondary} />
             }
           >
             {renderEmotionSelector()}
             
-            <Text style={styles.sectionTitle}>Recommended for You</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Recommended for You</Text>
             
             {recommendations.map(renderRecommendationCard)}
             

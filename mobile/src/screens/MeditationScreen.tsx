@@ -52,7 +52,7 @@ const CATEGORIES: { id: MeditationCategory | 'all' | 'favorites'; label: string;
   { id: 'self-compassion', label: 'Self-Love', icon: 'hand-heart' },
 ];
 
-export function MeditationScreen() {
+export function MeditationScreen({ navigation }: { navigation: any }) {
   const [viewMode, setViewMode] = useState<ViewMode>('browse');
   const [selectedCategory, setSelectedCategory] = useState<MeditationCategory | 'all' | 'favorites'>('all');
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -698,7 +698,14 @@ export function MeditationScreen() {
         {viewMode === 'browse' && (
           <>
             <View style={styles.header}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Ionicons name="arrow-back" size={24} color="#F5F0E8" />
+              </TouchableOpacity>
               <Text style={styles.title}>Meditate</Text>
+              <View style={{ width: 40 }} />
             </View>
             {renderBrowseView()}
           </>
@@ -717,9 +724,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 16,
+  },
+  backButton: {
+    marginRight: 12,
+    padding: 4,
   },
   title: {
     fontSize: 28,

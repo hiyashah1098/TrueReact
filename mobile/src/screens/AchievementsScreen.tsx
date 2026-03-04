@@ -26,6 +26,7 @@ import {
   GamificationSummary,
   Badge,
 } from '../services/gamification';
+import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 const BADGE_SIZE = (width - 64) / 3;
@@ -33,6 +34,7 @@ const BADGE_SIZE = (width - 64) / 3;
 type BadgeCategory = 'all' | 'streak' | 'milestone' | 'engagement' | 'mastery' | 'special';
 
 export function AchievementsScreen() {
+  const { colors, isDark } = useTheme();
   const [data, setData] = useState<GamificationData | null>(null);
   const [summary, setSummary] = useState<GamificationSummary | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<BadgeCategory>('all');
@@ -293,14 +295,14 @@ export function AchievementsScreen() {
   if (!data || !summary) {
     return (
       <View style={styles.container}>
-        <LinearGradient colors={['#2D2845', '#1A1625']} style={styles.gradient}>
-          <View style={styles.loadingContainer}>
+        <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.gradient}>
+          <View style={[styles.loadingContainer, { backgroundColor: 'transparent' }]}>
             <MaterialCommunityIcons
               name="trophy-outline"
               size={48}
-              color="#9B7EC6"
+              color={colors.secondary}
             />
-            <Text style={styles.loadingText}>Loading achievements...</Text>
+            <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading achievements...</Text>
           </View>
         </LinearGradient>
       </View>
@@ -313,17 +315,17 @@ export function AchievementsScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#2D2845', '#1A1625']} style={styles.gradient}>
+      <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.gradient}>
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Achievements</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Progress</Text>
           </View>
 
           {/* Level Card */}
-          <View style={styles.levelCard}>
+          <View style={[styles.levelCard, { backgroundColor: isDark ? 'rgba(45, 40, 69, 0.6)' : 'rgba(123, 104, 176, 0.08)' }]}>
             <LinearGradient
-              colors={['rgba(155, 126, 198, 0.3)', 'rgba(107, 141, 214, 0.2)']}
+              colors={isDark ? ['rgba(155, 126, 198, 0.3)', 'rgba(107, 141, 214, 0.2)'] : ['rgba(155, 126, 198, 0.15)', 'rgba(107, 141, 214, 0.1)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.levelGradient}

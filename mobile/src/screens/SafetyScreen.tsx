@@ -38,12 +38,14 @@ import {
   textCrisisLine,
   analyzeCrisisPatterns,
 } from '../services/safety';
+import { useTheme } from '../context/ThemeContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type ViewMode = 'home' | 'contacts' | 'plan' | 'resources';
 
 export default function SafetyScreen({ navigation }: any) {
+  const { colors, isDark } = useTheme();
   const [viewMode, setViewMode] = useState<ViewMode>('home');
   const [contacts, setContacts] = useState<EmergencyContact[]>([]);
   const [safetyPlan, setSafetyPlan] = useState<SafetyPlan | null>(null);
@@ -165,6 +167,10 @@ export default function SafetyScreen({ navigation }: any) {
       ]
     );
   };
+
+  // Dynamic styles based on theme
+  const cardBg = isDark ? 'rgba(45, 40, 69, 0.6)' : '#FFFFFF';
+  const cardBorder = isDark ? 'rgba(155, 126, 198, 0.15)' : 'rgba(0,0,0,0.05)';
   
   const renderHomeView = () => {
     const iceContact = contacts.find(c => c.isICE) || contacts[0];
@@ -191,39 +197,39 @@ export default function SafetyScreen({ navigation }: any) {
           {/* Quick ICE Contact */}
           {iceContact && (
             <TouchableOpacity
-              style={styles.iceButton}
+              style={[styles.iceButton, { backgroundColor: cardBg, borderColor: cardBorder, borderWidth: 1 }]}
               onPress={() => handleCallContact(iceContact)}
             >
               <View style={styles.iceContent}>
-                <Ionicons name="person-circle-outline" size={28} color="#9B7EC6" />
+                <Ionicons name="person-circle-outline" size={28} color={colors.secondary} />
                 <View style={styles.iceInfo}>
-                  <Text style={styles.iceName}>{iceContact.name}</Text>
-                  <Text style={styles.iceLabel}>Emergency Contact</Text>
+                  <Text style={[styles.iceName, { color: colors.text }]}>{iceContact.name}</Text>
+                  <Text style={[styles.iceLabel, { color: colors.secondary }]}>Emergency Contact</Text>
                 </View>
-                <Ionicons name="call-outline" size={24} color="#9B7EC6" />
+                <Ionicons name="call-outline" size={24} color={colors.secondary} />
               </View>
             </TouchableOpacity>
           )}
           
           {/* Text Crisis Line */}
           <TouchableOpacity
-            style={styles.textButton}
+            style={[styles.textButton, { backgroundColor: cardBg, borderColor: colors.calm }]}
             onPress={textCrisisLine}
           >
-            <Ionicons name="chatbubble-outline" size={24} color="#3498DB" />
-            <Text style={styles.textButtonLabel}>Text HOME to 741741</Text>
+            <Ionicons name="chatbubble-outline" size={24} color={colors.calm} />
+            <Text style={[styles.textButtonLabel, { color: colors.calm }]}>Text HOME to 741741</Text>
           </TouchableOpacity>
         </View>
         
         {/* Grounding Exercises */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ground Yourself Now</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Ground Yourself Now</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.groundingRow}>
               {CRISIS_GROUNDING.map((exercise) => (
                 <TouchableOpacity
                   key={exercise.id}
-                  style={styles.groundingCard}
+                  style={[styles.groundingCard, { backgroundColor: cardBg }]}
                   onPress={() => {
                     setSelectedGrounding(exercise);
                     setShowGroundingModal(true);
@@ -232,7 +238,7 @@ export default function SafetyScreen({ navigation }: any) {
                   <View style={[styles.groundingIcon, { backgroundColor: exercise.color + '20' }]}>
                     <Ionicons name={exercise.icon as any} size={24} color={exercise.color} />
                   </View>
-                  <Text style={styles.groundingName}>{exercise.name}</Text>
+                  <Text style={[styles.groundingName, { color: colors.text }]}>{exercise.name}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -241,24 +247,24 @@ export default function SafetyScreen({ navigation }: any) {
         
         {/* Quick Navigation */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Safety Tools</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Safety Tools</Text>
           <View style={styles.navGrid}>
             <TouchableOpacity
-              style={styles.navCard}
+              style={[styles.navCard, { backgroundColor: cardBg }]}
               onPress={() => setViewMode('contacts')}
             >
-              <Ionicons name="people-outline" size={28} color="#9B7EC6" />
-              <Text style={styles.navLabel}>Contacts</Text>
-              <Text style={styles.navCount}>{contacts.length}</Text>
+              <Ionicons name="people-outline" size={28} color={colors.secondary} />
+              <Text style={[styles.navLabel, { color: colors.text }]}>Contacts</Text>
+              <Text style={[styles.navCount, { color: colors.textMuted }]}>{contacts.length}</Text>
             </TouchableOpacity>
             
             <TouchableOpacity
-              style={styles.navCard}
+              style={[styles.navCard, { backgroundColor: cardBg }]}
               onPress={() => setViewMode('plan')}
             >
-              <Ionicons name="shield-checkmark-outline" size={28} color="#7BC67E" />
-              <Text style={styles.navLabel}>Safety Plan</Text>
-              <Text style={styles.navCount}>
+              <Ionicons name="shield-checkmark-outline" size={28} color={colors.success} />
+              <Text style={[styles.navLabel, { color: colors.text }]}>Safety Plan</Text>
+              <Text style={[styles.navCount, { color: colors.textMuted }]}>
                 {safetyPlan ? 
                   Object.values(safetyPlan).filter(Array.isArray).flat().length : 0
                 } items
@@ -266,12 +272,12 @@ export default function SafetyScreen({ navigation }: any) {
             </TouchableOpacity>
             
             <TouchableOpacity
-              style={styles.navCard}
+              style={[styles.navCard, { backgroundColor: cardBg }]}
               onPress={() => setViewMode('resources')}
             >
-              <Ionicons name="heart-outline" size={28} color="#E74C3C" />
-              <Text style={styles.navLabel}>Resources</Text>
-              <Text style={styles.navCount}>{CRISIS_RESOURCES.length}</Text>
+              <Ionicons name="heart-outline" size={28} color={colors.error} />
+              <Text style={[styles.navLabel, { color: colors.text }]}>Resources</Text>
+              <Text style={[styles.navCount, { color: colors.textMuted }]}>{CRISIS_RESOURCES.length}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -279,14 +285,14 @@ export default function SafetyScreen({ navigation }: any) {
         {/* Pattern Insights */}
         {patternAnalysis && patternAnalysis.recentEvents > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Your Insights</Text>
-            <View style={styles.insightCard}>
-              <Text style={styles.insightText}>{patternAnalysis.recommendation}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Insights</Text>
+            <View style={[styles.insightCard, { backgroundColor: cardBg }]}>
+              <Text style={[styles.insightText, { color: colors.text }]}>{patternAnalysis.recommendation}</Text>
               
               {patternAnalysis.effectiveCoping.length > 0 && (
-                <View style={styles.insightRow}>
-                  <Text style={styles.insightLabel}>What's helped:</Text>
-                  <Text style={styles.insightValue}>
+                <View style={[styles.insightRow, { borderTopColor: colors.border }]}>
+                  <Text style={[styles.insightLabel, { color: colors.textMuted }]}>What's helped:</Text>
+                  <Text style={[styles.insightValue, { color: colors.secondary }]}>
                     {patternAnalysis.effectiveCoping.join(', ')}
                   </Text>
                 </View>
@@ -303,7 +309,7 @@ export default function SafetyScreen({ navigation }: any) {
   const renderContactsView = () => (
     <ScrollView style={styles.contactsContainer}>
       <View style={styles.contactsHeader}>
-        <Text style={styles.contactsTitle}>Emergency Contacts</Text>
+        <Text style={[styles.contactsTitle, { color: colors.text }]}>Emergency Contacts</Text>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => {
@@ -317,9 +323,9 @@ export default function SafetyScreen({ navigation }: any) {
       
       {contacts.length === 0 ? (
         <View style={styles.emptyState}>
-          <Ionicons name="people-outline" size={64} color="#B8B0C8" />
-          <Text style={styles.emptyTitle}>No Emergency Contacts</Text>
-          <Text style={styles.emptySubtitle}>
+          <Ionicons name="people-outline" size={64} color={colors.textSecondary} />
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>No Emergency Contacts</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
             Add people you can reach out to in a crisis
           </Text>
         </View>
@@ -615,28 +621,26 @@ export default function SafetyScreen({ navigation }: any) {
   
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <Ionicons name="shield-checkmark-outline" size={48} color="#9B7EC6" />
-        <Text style={styles.loadingText}>Loading safety tools...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <Ionicons name="shield-checkmark-outline" size={48} color={colors.secondary} />
+        <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading safety tools...</Text>
       </View>
     );
   }
   
   return (
-    <LinearGradient colors={['#F8F7FC', '#EDE9F8']} style={styles.container}>
+    <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
           {viewMode !== 'home' ? (
             <TouchableOpacity onPress={() => setViewMode('home')}>
-              <Ionicons name="arrow-back" size={24} color="#2D2D44" />
+              <Ionicons name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color="#2D2D44" />
-            </TouchableOpacity>
+            <View style={{ width: 24 }} />
           )}
-          <Text style={styles.title}>
+          <Text style={[styles.title, { color: colors.text }]}>
             {viewMode === 'contacts' ? 'Emergency Contacts' :
              viewMode === 'plan' ? 'Safety Plan' :
              viewMode === 'resources' ? 'Crisis Resources' :

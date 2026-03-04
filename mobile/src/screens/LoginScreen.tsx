@@ -108,7 +108,7 @@ export default function LoginScreen() {
             </Text>
             <View style={styles.tagline}>
               <View style={styles.tagDot} />
-              <Text style={styles.tagText}>Neurodivergent-friendly coaching</Text>
+              <Text style={styles.tagText}>Real-time emotional wellness coaching</Text>
             </View>
           </View>
 

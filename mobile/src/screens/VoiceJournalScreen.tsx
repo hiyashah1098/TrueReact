@@ -37,7 +37,7 @@ const { width } = Dimensions.get('window');
 
 type ViewMode = 'record' | 'history' | 'stats';
 
-export function VoiceJournalScreen() {
+export function VoiceJournalScreen({ navigation }: { navigation: any }) {
   const [viewMode, setViewMode] = useState<ViewMode>('record');
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [stats, setStats] = useState<JournalStats | null>(null);
@@ -687,7 +687,14 @@ export function VoiceJournalScreen() {
       <LinearGradient colors={['#2D2845', '#1A1625']} style={styles.gradient}>
         {/* Header */}
         <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#F5F0E8" />
+          </TouchableOpacity>
           <Text style={styles.title}>Voice Journal</Text>
+          <View style={{ width: 40 }} />
         </View>
 
         {/* View Tabs */}
@@ -738,9 +745,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 16,
+  },
+  backButton: {
+    marginRight: 12,
+    padding: 4,
   },
   title: {
     fontSize: 28,
