@@ -55,7 +55,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const [error, setError] = useState<string | null>(null);
 
   const recordingRef = useRef<Audio.Recording | null>(null);
-  const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const chunkIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Initialize audio session
   useEffect(() => {
@@ -179,7 +179,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             // Read the audio file as base64
             // In production, this would be optimized to stream chunks
             const base64 = await FileSystem.readAsStringAsync(uri, {
-              encoding: FileSystem.EncodingType.Base64,
+              encoding: 'base64',
             });
             
             setAudioData(base64);

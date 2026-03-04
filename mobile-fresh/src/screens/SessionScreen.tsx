@@ -96,7 +96,7 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
 
   // Session timer
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setInterval>;
     if (sessionState === 'active') {
       timer = setInterval(() => {
         setSessionDuration(prev => prev + 1);

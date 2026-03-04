@@ -1,4 +1,8 @@
 {
-  "compilerOptions": {},
-  "extends": "expo/tsconfig.base"
+  "extends": "./mobile-fresh/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["mobile-fresh/src/**/*", "mobile-fresh/App.tsx"],
+  "exclude": ["node_modules", "**/node_modules"]
 }

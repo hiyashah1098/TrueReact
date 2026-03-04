@@ -16,14 +16,10 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 
-type SafeStateScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'SafeState'>;
-  route: RouteProp<RootStackParamList, 'SafeState'>;
-};
+type SafeStateScreenProps = NativeStackScreenProps<RootStackParamList, 'SafeState'>;
 
 export default function SafeStateScreen({ navigation, route }: SafeStateScreenProps) {
   const resources = route.params?.resources || {

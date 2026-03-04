@@ -40,7 +40,7 @@ export function useWebSocket(): UseWebSocketReturn {
   const wsRef = useRef<WebSocket | null>(null);
   const clientIdRef = useRef<string>(generateClientId());
   const reconnectAttempts = useRef(0);
-  const heartbeatInterval = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const shouldReconnect = useRef(true);
 
   const connect = useCallback(async (): Promise<void> => {
