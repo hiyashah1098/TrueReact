@@ -2,6 +2,7 @@
  * TrueReact - Calibration Screen
  * 
  * Guides users through initial calibration to establish baseline metrics.
+ * Supports both mobile and web platforms.
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -12,8 +13,11 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  Platform,
+  ScrollView,
+  ActivityIndicator,
 } from 'react-native';
-import { Camera, CameraView, useCameraPermissions } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +25,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 
 const { width, height } = Dimensions.get('window');
+const isWeb = Platform.OS === 'web';
+
+// Responsive sizing for face guide (smaller on web to fit better)
+const faceGuideWidth = isWeb ? Math.min(width * 0.3, 300) : width * 0.6;
+const faceGuideHeight = isWeb ? Math.min(width * 0.4, 400) : width * 0.8;
 
 type CalibrationScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Calibration'>;
@@ -67,6 +76,9 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
   
   const progressAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -99,9 +111,48 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
   }, [isCalibrating]);
 
   const requestPermissions = async () => {
-    const cameraResult = await requestCameraPermission();
-    const audioResult = await Audio.requestPermissionsAsync();
-    setAudioPermission(audioResult.granted);
+    setIsLoading(true);
+    setPermissionError(null);
+    
+    try {
+      if (isWeb) {
+        // Web-specific permission handling
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: true, 
+            audio: true 
+          });
+          // Stop the stream immediately - we just wanted to check permissions
+          stream.getTracks().forEach(track => track.stop());
+          setAudioPermission(true);
+          // Also request through Expo for consistency
+          await requestCameraPermission();
+        } catch (err: any) {
+          console.error('Web permission error:', err);
+          if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            setPermissionError('Camera and microphone permissions were denied. Please enable them in your browser settings.');
+          } else if (err.name === 'NotFoundError') {
+            setPermissionError('No camera or microphone found. Please connect a camera and microphone.');
+          } else {
+            setPermissionError('Unable to access camera. Please check your browser permissions.');
+          }
+        }
+      } else {
+        // Mobile permission handling
+        const cameraResult = await requestCameraPermission();
+        const audioResult = await Audio.requestPermissionsAsync();
+        setAudioPermission(audioResult.granted);
+      }
+    } catch (error) {
+      console.error('Permission request error:', error);
+      setPermissionError('Failed to request permissions. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCameraReady = () => {
+    setCameraReady(true);
   };
 
   const startCalibration = async () => {
@@ -134,19 +185,73 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
     navigation.replace('Session', {});
   };
 
-  if (!cameraPermission?.granted || !audioPermission) {
+  // Loading state
+  if (isLoading) {
     return (
       <LinearGradient colors={['#1A1625', '#252136']} style={styles.container}>
         <View style={styles.permissionContainer}>
+          <ActivityIndicator size="large" color="#F5A623" />
+          <Text style={[styles.permissionTitle, { marginTop: 24 }]}>
+            Initializing Camera...
+          </Text>
+          <Text style={styles.permissionText}>
+            Please allow camera and microphone access when prompted.
+          </Text>
+        </View>
+      </LinearGradient>
+    );
+  }
+
+  // Permission error state
+  if (permissionError) {
+    return (
+      <LinearGradient colors={['#1A1625', '#252136']} style={styles.container}>
+        <ScrollView contentContainerStyle={styles.permissionContainer}>
+          <Ionicons name="warning-outline" size={64} color="#E94560" />
+          <Text style={styles.permissionTitle}>Permission Error</Text>
+          <Text style={styles.permissionText}>{permissionError}</Text>
+          {isWeb && (
+            <Text style={[styles.permissionText, { marginTop: 12, fontSize: 13 }]}>
+              On web, click the camera icon in your browser's address bar to manage permissions.
+            </Text>
+          )}
+          <TouchableOpacity style={styles.permissionButton} onPress={requestPermissions}>
+            <Text style={styles.permissionButtonText}>Try Again</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.permissionButton, { backgroundColor: '#4A5568', marginTop: 12 }]} 
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.permissionButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </LinearGradient>
+    );
+  }
+
+  // Permission not granted
+  const hasPermissions = isWeb 
+    ? (cameraPermission?.granted && audioPermission) 
+    : (cameraPermission?.granted && audioPermission);
+
+  if (!hasPermissions) {
+    return (
+      <LinearGradient colors={['#1A1625', '#252136']} style={styles.container}>
+        <ScrollView contentContainerStyle={styles.permissionContainer}>
           <Ionicons name="camera-outline" size={64} color="#F5A623" />
           <Text style={styles.permissionTitle}>Permissions Required</Text>
           <Text style={styles.permissionText}>
             TrueReact needs camera and microphone access to analyze your expressions and voice.
           </Text>
+          {isWeb && (
+            <Text style={[styles.permissionText, { marginTop: 12, fontSize: 13 }]}>
+              Your browser will prompt you to allow access. Make sure to click "Allow".
+            </Text>
+          )}
           <TouchableOpacity style={styles.permissionButton} onPress={requestPermissions}>
             <Text style={styles.permissionButtonText}>Grant Permissions</Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
       </LinearGradient>
     );
   }
@@ -183,7 +288,15 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
         ref={cameraRef}
         style={styles.camera}
         facing="front"
+        onCameraReady={handleCameraReady}
       >
+        {/* Loading overlay while camera initializes */}
+        {!cameraReady && (
+          <View style={styles.cameraLoadingOverlay}>
+            <ActivityIndicator size="large" color="#F5A623" />
+            <Text style={{ color: '#fff', marginTop: 12 }}>Starting camera...</Text>
+          </View>
+        )}
         {/* Overlay */}
         <LinearGradient
           colors={['rgba(26, 22, 37, 0.3)', 'rgba(26, 22, 37, 0.7)']}
@@ -275,6 +388,13 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
   },
+  cameraLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(26, 22, 37, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
   overlay: {
     flex: 1,
     justifyContent: 'space-between',
@@ -282,21 +402,21 @@ const styles = StyleSheet.create({
   },
   faceGuide: {
     alignSelf: 'center',
-    marginTop: 60,
-    width: width * 0.6,
-    height: width * 0.8,
+    marginTop: isWeb ? 30 : 60,
+    width: faceGuideWidth,
+    height: faceGuideHeight,
     borderWidth: 2,
     borderColor: 'rgba(233, 69, 96, 0.5)',
-    borderRadius: width * 0.3,
+    borderRadius: faceGuideWidth * 0.5,
     justifyContent: 'center',
     alignItems: 'center',
   },
   faceGuideInner: {
-    width: width * 0.55,
-    height: width * 0.75,
+    width: faceGuideWidth * 0.92,
+    height: faceGuideHeight * 0.94,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: width * 0.275,
+    borderRadius: faceGuideWidth * 0.46,
     borderStyle: 'dashed',
   },
   recordingContainer: {

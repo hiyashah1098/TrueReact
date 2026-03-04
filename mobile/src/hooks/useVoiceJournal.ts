@@ -2,10 +2,11 @@
  * TrueReact - Voice Journal Hook
  * 
  * Handles audio recording, transcription via Speech-to-Text,
- * and journal entry creation.
+ * and journal entry creation. Supports both mobile and web platforms.
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { Platform } from 'react-native';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import {
@@ -14,6 +15,22 @@ import {
   analyzeEmotionsLocally,
   JournalEntry,
 } from '../services/voiceJournal';
+
+const isWeb = Platform.OS === 'web';
+
+// Safe haptics that doesn't error on web
+const safeHaptics = {
+  impactAsync: async (style: any) => {
+    if (!isWeb) {
+      await Haptics.impactAsync(style);
+    }
+  },
+  notificationAsync: async (type: any) => {
+    if (!isWeb) {
+      await Haptics.notificationAsync(type);
+    }
+  },
+};
 
 export type RecordingState = 'idle' | 'recording' | 'paused' | 'processing' | 'complete';
 
@@ -138,11 +155,13 @@ export function useVoiceJournal(options: UseVoiceJournalOptions = {}): UseVoiceJ
         throw new Error('Microphone permission not granted');
       }
 
-      // Set audio mode
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
+      // Set audio mode (mobile-specific settings)
+      if (!isWeb) {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+        });
+      }
 
       // Create and start recording
       const { recording } = await Audio.Recording.createAsync(
@@ -161,7 +180,7 @@ export function useVoiceJournal(options: UseVoiceJournalOptions = {}): UseVoiceJ
       startDurationTracking();
       startLevelTracking();
       
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      safeHaptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
       console.error('Failed to start recording:', error);
       onError?.(error as Error);
@@ -175,7 +194,7 @@ export function useVoiceJournal(options: UseVoiceJournalOptions = {}): UseVoiceJ
         setState('paused');
         stopDurationTracking();
         stopLevelTracking();
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        safeHaptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       } catch (error) {
         console.error('Failed to pause recording:', error);
         onError?.(error as Error);
@@ -190,7 +209,7 @@ export function useVoiceJournal(options: UseVoiceJournalOptions = {}): UseVoiceJ
         setState('recording');
         startDurationTracking();
         startLevelTracking();
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        safeHaptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       } catch (error) {
         console.error('Failed to resume recording:', error);
         onError?.(error as Error);
@@ -205,17 +224,19 @@ export function useVoiceJournal(options: UseVoiceJournalOptions = {}): UseVoiceJ
       setState('processing');
       stopDurationTracking();
       stopLevelTracking();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      safeHaptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       // Stop and get URI
       await recordingRef.current.stopAndUnloadAsync();
       const uri = recordingRef.current.getURI();
       recordingRef.current = null;
 
-      // Reset audio mode
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-      });
+      // Reset audio mode (mobile only)
+      if (!isWeb) {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+        });
+      }
 
       if (!uri) {
         throw new Error('Recording URI not available');

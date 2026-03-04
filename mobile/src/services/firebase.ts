@@ -264,6 +264,67 @@ export async function getSession(uid: string, sessionId: string): Promise<Coachi
   return null;
 }
 
+// Delete a single session
+export async function deleteSession(uid: string, sessionId: string): Promise<void> {
+  const sessionRef = doc(db, 'users', uid, 'sessions', sessionId);
+  
+  // Get the session first to update stats
+  const sessionSnap = await getDoc(sessionRef);
+  
+  if (sessionSnap.exists()) {
+    const sessionData = sessionSnap.data();
+    
+    // Delete the session
+    await deleteDoc(sessionRef);
+    
+    // Update user stats
+    const userRef = doc(db, 'users', uid);
+    const userSnap = await getDoc(userRef);
+    
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      const currentSessions = userData.stats?.totalSessions || 0;
+      const currentMoments = userData.stats?.totalCoachingMoments || 0;
+      
+      await updateDoc(userRef, {
+        'stats.totalSessions': Math.max(0, currentSessions - 1),
+        'stats.totalCoachingMoments': Math.max(0, currentMoments - (sessionData.feedbackCount || 0)),
+      });
+    }
+  }
+}
+
+// Delete all sessions for a user
+export async function clearAllSessions(uid: string): Promise<number> {
+  const sessionsRef = collection(db, 'users', uid, 'sessions');
+  const querySnapshot = await getDocs(sessionsRef);
+  
+  let deletedCount = 0;
+  let totalFeedback = 0;
+  
+  // Delete all session documents
+  const deletePromises = querySnapshot.docs.map(async (docSnap) => {
+    totalFeedback += docSnap.data().feedbackCount || 0;
+    await deleteDoc(docSnap.ref);
+    deletedCount++;
+  });
+  
+  await Promise.all(deletePromises);
+  
+  // Reset user stats
+  const userRef = doc(db, 'users', uid);
+  const userSnap = await getDoc(userRef);
+  
+  if (userSnap.exists()) {
+    await updateDoc(userRef, {
+      'stats.totalSessions': 0,
+      'stats.totalCoachingMoments': 0,
+    });
+  }
+  
+  return deletedCount;
+}
+
 // ==================== PUSH NOTIFICATIONS ====================
 
 export async function savePushToken(uid: string, token: string): Promise<void> {
@@ -624,6 +685,8 @@ export default {
   updateUserSettings,
   saveSession,
   getSessionHistory,
+  deleteSession,
+  clearAllSessions,
   savePushToken,
   // Community & Messaging
   searchUsers,

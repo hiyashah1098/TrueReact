@@ -3,6 +3,7 @@
  * 
  * Main coaching session interface with real-time video/audio streaming,
  * emotion visualization, coaching feedback overlays, and barge-in interrupt capability.
+ * Supports both mobile and web platforms.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -18,6 +19,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Audio } from 'expo-av';
@@ -36,6 +38,7 @@ import EmotionVisualizer, { EmotionState } from '../components/EmotionVisualizer
 import EmotionTrendGraph, { EmotionDataPoint } from '../components/EmotionTrendGraph';
 
 const { width, height } = Dimensions.get('window');
+const isWeb = Platform.OS === 'web';
 
 type SessionScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Session'>;
@@ -53,7 +56,7 @@ type SessionState = 'connecting' | 'active' | 'paused' | 'safe_state' | 'ended';
 
 export default function SessionScreen({ navigation }: SessionScreenProps) {
   const { user } = useAuth();
-  const [cameraPermission] = useCameraPermissions();
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [sessionState, setSessionState] = useState<SessionState>('connecting');
   const [currentFeedback, setCurrentFeedback] = useState<CoachingFeedback | null>(null);
   const [feedbackHistory, setFeedbackHistory] = useState<CoachingFeedback[]>([]);
@@ -64,6 +67,8 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [sessionStartTime] = useState<Date>(new Date());
   const [safeStateTriggered, setSafeStateTriggered] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
   
   // Emotion visualization state
   const [emotionState, setEmotionState] = useState<EmotionState>({
@@ -266,6 +271,24 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
 
   const initializeSession = async () => {
     try {
+      // Request permissions first (especially important for web)
+      if (isWeb) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: true, 
+            audio: true 
+          });
+          stream.getTracks().forEach(track => track.stop());
+        } catch (err: any) {
+          console.error('Web permission error:', err);
+          setPermissionError(err.name === 'NotAllowedError' 
+            ? 'Camera/microphone access denied. Please enable in browser settings.' 
+            : 'Unable to access camera/microphone.');
+          setSessionState('ended');
+          return;
+        }
+      }
+      
       // Try to connect to backend (will enter demo mode if unavailable)
       await connect();
       
@@ -284,6 +307,10 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
       // Still allow session to start in demo mode
       setSessionState('active');
     }
+  };
+
+  const handleCameraReady = () => {
+    setCameraReady(true);
   };
 
   const cleanupSession = async () => {
@@ -380,11 +407,11 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
       return updated.slice(-30);
     });
     
-    // Haptic feedback for significant changes
-    if (newEmotionState.maskingDetected) {
+    // Haptic feedback for significant changes (mobile only)
+    if (!isWeb && newEmotionState.maskingDetected) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    if (newEmotionState.congruenceScore < 0.6) {
+    if (!isWeb && newEmotionState.congruenceScore < 0.6) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
@@ -411,11 +438,13 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     setCurrentFeedback(feedback);
     setFeedbackHistory(prev => [...prev, feedback]);
 
-    // Haptic feedback based on urgency
-    if (feedback.urgency === 'high') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    } else {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Haptic feedback based on urgency (mobile only)
+    if (!isWeb) {
+      if (feedback.urgency === 'high') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      } else {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     }
 
     // Animate feedback in
@@ -443,7 +472,9 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
 
   const handleBargeIn = () => {
     setShowInterruptModal(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (!isWeb) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
   };
 
   const submitInterrupt = async () => {
@@ -526,6 +557,39 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Permission error state for web
+  if (permissionError) {
+    return (
+      <LinearGradient colors={['#1A1625', '#252136']} style={styles.container}>
+        <View style={styles.permissionErrorContainer}>
+          <Ionicons name="warning-outline" size={64} color="#E94560" />
+          <Text style={styles.permissionErrorTitle}>Permission Error</Text>
+          <Text style={styles.permissionErrorText}>{permissionError}</Text>
+          {isWeb && (
+            <Text style={[styles.permissionErrorText, { marginTop: 12, fontSize: 13 }]}>
+              Click the camera icon in your browser's address bar to manage permissions.
+            </Text>
+          )}
+          <TouchableOpacity 
+            style={styles.permissionRetryButton} 
+            onPress={() => {
+              setPermissionError(null);
+              initializeSession();
+            }}
+          >
+            <Text style={styles.permissionRetryText}>Try Again</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.permissionRetryButton, { backgroundColor: '#4A5568', marginTop: 12 }]} 
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.permissionRetryText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Camera View */}
@@ -533,7 +597,15 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
         ref={cameraRef}
         style={styles.camera}
         facing="front"
+        onCameraReady={handleCameraReady}
       >
+        {/* Loading overlay while camera initializes */}
+        {!cameraReady && (
+          <View style={styles.cameraLoadingOverlay}>
+            <ActivityIndicator size="large" color="#F5A623" />
+            <Text style={{ color: '#fff', marginTop: 12 }}>Starting camera...</Text>
+          </View>
+        )}
         {/* Top Bar */}
         <LinearGradient
           colors={['rgba(26, 26, 46, 0.8)', 'transparent']}
@@ -686,6 +758,43 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+  },
+  cameraLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(26, 22, 37, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  permissionErrorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  permissionErrorTitle: {
+    color: '#F5F0E8',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  permissionErrorText: {
+    color: '#B8B0C8',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  permissionRetryButton: {
+    backgroundColor: '#F5A623',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+  },
+  permissionRetryText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   topBar: {
     flexDirection: 'row',

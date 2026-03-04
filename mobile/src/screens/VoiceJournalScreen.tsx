@@ -17,6 +17,7 @@ import {
   Alert,
   Animated,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
@@ -150,7 +151,9 @@ export function VoiceJournalScreen({ navigation }: { navigation: any }) {
   };
 
   const handleToggleFavorite = async (entry: JournalEntry) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     await toggleFavorite(entry.id);
     loadData();
     if (selectedEntry?.id === entry.id) {

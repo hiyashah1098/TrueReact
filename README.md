@@ -4,7 +4,21 @@
 
 TrueReact helps users align their internal intent with their external social signals (facial expressions, tone, and pacing) using the power of Gemini Live API and a sophisticated multi-agent architecture.
 
-## 🎯 Mission
+## � Live Demo
+
+**Web App:** [https://truereact.surge.sh](https://truereact.surge.sh)
+
+> Access TrueReact directly from your browser - no installation required! Works on desktop and mobile browsers.
+
+## 📱 Platforms
+
+| Platform | Status | Access |
+|----------|--------|--------|
+| **Web** | ✅ Live | [truereact.surge.sh](https://truereact.surge.sh) |
+| **iOS** | ✅ Ready | Run locally with Expo Go |
+| **Android** | ✅ Ready | Run locally with Expo Go |
+
+## �🎯 Mission
 
 TrueReact isn't a chatbot—it's a persistent, "eyes-on" companion that provides:
 
@@ -117,11 +131,13 @@ The mobile app features **live emotion feedback**:
 | Component | Technology | Role |
 |-----------|------------|------|
 | Frontend | React Native + Expo SDK 54 | Captures real-time audio/video streams, emotion visualization |
+| Web | React Native Web | Cross-platform web app with shared codebase |
 | Live Logic | Gemini Live API | Processes bidirectional, low-latency multimodal streams |
 | Backend | FastAPI + Cloud Run | Hosts multi-agent orchestration layer (ADK pattern) |
 | Grounding | Vertex AI Search + Google Search | Multi-source evidence-based grounding with fallback |
 | Database | Firebase Firestore | User data, session history, techniques progress |
 | Auth | Firebase Auth | Secure user authentication |
+| Hosting | Surge.sh | Static web app hosting |
 | Observability | Cloud Logging | Provides the "GCP Proof" required for submission |
 
 ## 🚀 Getting Started
@@ -326,6 +342,22 @@ Comprehensive safety features for emergency situations:
 - 5-4-3-2-1 grounding exercises
 - Crisis resource directory
 - Pattern analysis for early intervention
+
+### 🗑️ Session History Management
+Full control over your session data:
+- View complete history of past coaching sessions
+- Delete individual sessions with confirmation
+- Clear all session history at once
+- Cross-platform support (mobile and web)
+- Real-time sync with Firebase
+
+### 🌐 Web App Support
+TrueReact is now available as a Progressive Web App:
+- Full feature parity with mobile app
+- Browser-based camera and microphone access
+- Responsive design for desktop and mobile browsers
+- No installation required
+- Works on Chrome, Firefox, Safari, and Edge
 
 ## 🎮 Demo Mode
 
