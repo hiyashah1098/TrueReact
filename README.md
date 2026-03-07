@@ -76,6 +76,73 @@ TrueReact isn't a chatbot—it's a persistent, "eyes-on" companion that provides
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
+### Architecture Diagram (Mermaid)
+
+```mermaid
+flowchart TB
+    subgraph Client["📱 React Native Mobile App"]
+        Camera["🎥 Camera Module"]
+        Mic["🎤 Microphone"]
+        UI["💬 UI Components"]
+        EmotionRing["🎯 Emotion Ring"]
+    end
+
+    subgraph CloudRun["☁️ Google Cloud Run (ADK Backend)"]
+        WS["WebSocket Handler"]
+        Session["Session Manager"]
+        
+        subgraph Agents["🤖 Multi-Agent Pipeline"]
+            Emotion["EmotionAgent\n(Facial/Vocal Analysis)"]
+            Safety["SafetyAgent\n(Distress Detection)"]
+            Research["ResearchAgent\n(CBT/DBT Grounding)"]
+            Coaching["CoachingAgent\n(Personalized Feedback)"]
+        end
+        
+        Orchestrator["Orchestrator"]
+    end
+
+    subgraph GeminiAPI["🧠 Gemini Live API"]
+        Multimodal["Multimodal Processing\n• Video Analysis\n• Audio Processing\n• Real-time Inference"]
+        Streaming["Bidirectional Streaming\n• Low Latency\n• Barge-in Support"]
+    end
+
+    subgraph Grounding["📚 Grounding Layer"]
+        Vertex["Vertex AI Search"]
+        GoogleSearch["Google Search"]
+        LocalLib["Local CBT/DBT Library"]
+    end
+
+    subgraph Observability["📊 Cloud Logging & Monitoring"]
+        Logs["Session Logs"]
+        Metrics["Signal Metrics"]
+        Alerts["Alert Policies"]
+    end
+
+    Camera & Mic -->|"Video + Audio Frames"| WS
+    WS --> Session
+    Session --> Orchestrator
+    
+    Orchestrator --> Emotion
+    Emotion --> Safety
+    Safety --> Research
+    Research --> Coaching
+    Coaching --> Orchestrator
+    
+    Orchestrator <-->|"gRPC/REST"| Multimodal
+    Multimodal <--> Streaming
+    
+    Research --> Vertex
+    Research --> GoogleSearch
+    Research --> LocalLib
+    
+    Orchestrator -->|"Coaching Feedback"| WS
+    WS -->|"Real-time Updates"| UI & EmotionRing
+    
+    Session --> Logs
+    Orchestrator --> Metrics
+    Safety --> Alerts
+```
+
 ## 🤖 Multi-Agent Architecture (ADK)
 
 TrueReact uses a sophisticated **Agent Development Kit (ADK)** pipeline with specialized agents:
