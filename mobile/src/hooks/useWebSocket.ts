@@ -87,7 +87,7 @@ export function useWebSocket(): UseWebSocketReturn {
           resolve();
         };
 
-        wsRef.current.onclose = (event) => {
+        wsRef.current.onclose = (event: { code: number; reason: string }) => { 
           clearTimeout(connectionTimeout);
           console.log('📴 WebSocket closed:', event.code, event.reason);
           setIsConnected(false);
@@ -102,7 +102,7 @@ export function useWebSocket(): UseWebSocketReturn {
           }
         };
 
-        wsRef.current.onerror = (event) => {
+        wsRef.current.onerror = (_event: unknown) => {
           clearTimeout(connectionTimeout);
           console.log('⚠️ WebSocket error, entering demo mode');
           setIsConnecting(false);
@@ -111,7 +111,7 @@ export function useWebSocket(): UseWebSocketReturn {
           resolve(); // Resolve to allow demo mode instead of failing
         };
 
-        wsRef.current.onmessage = (event) => {
+        wsRef.current.onmessage = (event: { data: string }) => { 
           try {
             const message = JSON.parse(event.data) as WebSocketMessage;
             setLastMessage(message);

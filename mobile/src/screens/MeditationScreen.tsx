@@ -33,6 +33,7 @@ import {
   MeditationSession,
 } from '../services/meditation';
 import { recordActivity } from '../services/gamification';
+const AnimatedView = Animated.View as unknown as React.ComponentType<any>;
 
 const { width, height } = Dimensions.get('window');
 
@@ -116,7 +117,7 @@ export function MeditationScreen() {
   const handleToggleFavorite = async (meditation: Meditation) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const isFav = await toggleMeditationFavorite(meditation.id);
-    setFavorites(prev => 
+    setFavorites((prev: string[]) => 
       isFav ? [...prev, meditation.id] : prev.filter(id => id !== meditation.id)
     );
   };
@@ -157,10 +158,10 @@ export function MeditationScreen() {
               if (holdAfterExhale > 0) {
                 setBreathPhase('holdAfter');
                 setTimeout(() => {
-                  setBreathCount(prev => prev + 1);
+                  setStepProgress((prev: number) => prev + 1);
                 }, holdAfterExhale * 1000);
               } else {
-                setBreathCount(prev => prev + 1);
+                setCurrentStepIndex((prev: number) => prev + 1);
               }
             });
           }, hold * 1000);
@@ -171,7 +172,7 @@ export function MeditationScreen() {
             duration: exhale * 1000,
             useNativeDriver: true,
           }).start(() => {
-            setBreathCount(prev => prev + 1);
+            setTotalElapsed((prev: number) => prev + 1);
           });
         }
       });
@@ -203,7 +204,7 @@ export function MeditationScreen() {
     
     // Main timer
     timerRef.current = setInterval(() => {
-      setStepProgress(prev => {
+      setStepProgress((prev: number) => {
         const newProgress = prev + 1;
         const stepDuration = selectedMeditation.steps[currentStepIndex].duration;
         
@@ -232,7 +233,7 @@ export function MeditationScreen() {
         return newProgress;
       });
       
-      setTotalElapsed(prev => prev + 1);
+      setTotalElapsed((prev: number) => prev + 1);
     }, 1000);
   };
 
@@ -454,7 +455,7 @@ export function MeditationScreen() {
       <FlatList
         data={getFilteredMeditations()}
         renderItem={renderMeditationCard}
-        keyExtractor={item => item.id}
+        keyExtractor={(item: Meditation) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.gridRow}
         contentContainerStyle={styles.gridContent}
@@ -503,22 +504,7 @@ export function MeditationScreen() {
             {/* Breathing Circle */}
             {currentStep.type === 'breathing' && currentStep.breathingPattern && (
               <View style={styles.breathingContainer}>
-                <Animated.View
-                  style={[
-                    styles.breathingCircle,
-                    {
-                      backgroundColor: `${selectedMeditation.color}30`,
-                      transform: [
-                        {
-                          scale: breathAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [1, 1.5],
-                          }),
-                        },
-                      ],
-                    },
-                  ]}
-                >
+                <AnimatedView style={[styles.breathingCircle, { backgroundColor: `${selectedMeditation.color}30`, transform: [{ scale: breathAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.5] }) }] }]}>
                   <Text style={styles.breathPhaseText}>
                     {breathPhase === 'inhale' && 'Breathe In'}
                     {breathPhase === 'hold' && 'Hold'}
@@ -528,7 +514,7 @@ export function MeditationScreen() {
                   <Text style={styles.breathPatternName}>
                     {currentStep.breathingPattern.name}
                   </Text>
-                </Animated.View>
+                </AnimatedView>
                 <Text style={styles.breathCount}>
                   Breath {breathCount + 1}
                 </Text>
@@ -593,7 +579,7 @@ export function MeditationScreen() {
 
             {/* Step Indicators */}
             <View style={styles.stepIndicators}>
-              {selectedMeditation.steps.map((step, index) => (
+              {selectedMeditation.steps.map((step: MeditationStep, index: number) => (
                 <View
                   key={index}
                   style={[
@@ -617,7 +603,7 @@ export function MeditationScreen() {
                 onPress={() => {
                   if (currentStepIndex > 0) {
                     stopBreathingAnimation();
-                    setCurrentStepIndex(prev => prev - 1);
+                    setCurrentStepIndex((prev: number) => prev - 1);
                     setStepProgress(0);
                     setBreathCount(0);
                   }
@@ -652,7 +638,7 @@ export function MeditationScreen() {
                 onPress={() => {
                   if (currentStepIndex < selectedMeditation.steps.length - 1) {
                     stopBreathingAnimation();
-                    setCurrentStepIndex(prev => prev + 1);
+                    setCurrentStepIndex((prev: number) => prev + 1);
                     setStepProgress(0);
                     setBreathCount(0);
                   }

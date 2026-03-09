@@ -64,7 +64,7 @@ export function useSessionTimer(customSettings?: Partial<TimerSettings>) {
   useEffect(() => {
     if (timerState === 'session' || timerState === 'break') {
       intervalRef.current = setInterval(() => {
-        setSecondsRemaining(prev => {
+        setSecondsRemaining((prev: number) => {
           if (prev <= 1) {
             handleTimerComplete();
             return 0;
@@ -72,7 +72,7 @@ export function useSessionTimer(customSettings?: Partial<TimerSettings>) {
           
           // Track total session time
           if (timerState === 'session') {
-            setTotalSessionTime(t => t + 1);
+            setTotalSessionTime((t: number) => t + 1);
           }
           
           return prev - 1;
@@ -94,7 +94,7 @@ export function useSessionTimer(customSettings?: Partial<TimerSettings>) {
   useEffect(() => {
     if (timerState === 'breathing') {
       breathingIntervalRef.current = setInterval(() => {
-        setBreathingSeconds(prev => {
+        setSecondsRemaining((prev: number) => {
           if (prev <= 1) {
             // Move to next phase
             transitionBreathingPhase();
@@ -117,7 +117,7 @@ export function useSessionTimer(customSettings?: Partial<TimerSettings>) {
 
   const transitionBreathingPhase = useCallback(() => {
     const phases: BreathingPhase[] = ['inhale', 'hold', 'exhale', 'rest'];
-    setBreathingPhase(current => {
+    setBreathingPhase((current: BreathingPhase) => {
       const currentIndex = phases.indexOf(current);
       const nextIndex = (currentIndex + 1) % phases.length;
       
@@ -128,7 +128,7 @@ export function useSessionTimer(customSettings?: Partial<TimerSettings>) {
       
       // Track cycles (one cycle = inhale -> hold -> exhale -> rest)
       if (nextIndex === 0) {
-        setBreathingCycles(c => c + 1);
+        setBreathingCycles((c: number) => c + 1);
         
         // End after ~1 minute (3-4 cycles of 4-7-8-1 = 20s each)
         if (breathingCycles >= 2) {
@@ -161,7 +161,7 @@ export function useSessionTimer(customSettings?: Partial<TimerSettings>) {
       }
     } else if (timerState === 'break') {
       // Break complete, ready for next session
-      setBreaksTaken(b => b + 1);
+      setBreaksTaken((b: number) => b + 1);
       startSession();
     }
   }, [timerState, settings]);

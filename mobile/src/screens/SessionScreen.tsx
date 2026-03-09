@@ -34,7 +34,7 @@ import CoachingFeedbackOverlay from '../components/CoachingFeedbackOverlay';
 import InterruptModal from '../components/InterruptModal';
 import EmotionVisualizer, { EmotionState } from '../components/EmotionVisualizer';
 import EmotionTrendGraph, { EmotionDataPoint } from '../components/EmotionTrendGraph';
-
+const AnimatedView = Animated.View as unknown as React.ComponentType<any>;
 const { width, height } = Dimensions.get('window');
 
 type SessionScreenProps = {
@@ -119,7 +119,7 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     let timer: ReturnType<typeof setInterval>;
     if (sessionState === 'active') {
       timer = setInterval(() => {
-        setSessionDuration(prev => prev + 1);
+        setSessionDuration((prev: number) => prev + 1);
       }, 1000);
     }
     return () => clearInterval(timer);
@@ -374,7 +374,7 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
       timestamp: Date.now(),
     };
     
-    setEmotionHistory(prev => {
+    setEmotionHistory((prev: EmotionDataPoint[]) => {
       const updated = [...prev, dataPoint];
       // Keep last 30 data points for trend graph
       return updated.slice(-30);
@@ -409,7 +409,7 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     };
 
     setCurrentFeedback(feedback);
-    setFeedbackHistory(prev => [...prev, feedback]);
+    setFeedbackHistory((prev: CoachingFeedback[]) => [...prev, feedback]);
 
     // Haptic feedback based on urgency
     if (feedback.urgency === 'high') {
@@ -500,7 +500,7 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
           endedAt: new Date(),
           duration: sessionDuration,
           feedbackCount: feedbackHistory.length,
-          feedback: feedbackHistory.map(f => ({
+          feedback: feedbackHistory.map((f: CoachingFeedback) => ({
             timestamp: new Date(f.timestamp),
             category: f.category,
             observation: f.observation,
@@ -564,15 +564,10 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
 
         {/* Processing Indicator */}
         {isConnected && (
-          <Animated.View 
-            style={[
-              styles.processingIndicator,
-              { opacity: processingAnim }
-            ]}
-          >
-            <View style={styles.processingDot} />
-            <Text style={styles.processingText}>Analyzing...</Text>
-          </Animated.View>
+          <AnimatedView style={[styles.processingIndicator, { opacity: processingAnim }]}>
+          <View style={styles.processingDot} />
+          <Text style={styles.processingText}>Analyzing...</Text>
+        </AnimatedView>
         )}
 
         {/* Emotion Visualizer Overlay */}

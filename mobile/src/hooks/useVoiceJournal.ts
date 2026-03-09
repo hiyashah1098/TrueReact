@@ -109,7 +109,7 @@ export function useVoiceJournal(options: UseVoiceJournalOptions = {}): UseVoiceJ
           if (status.isRecording && status.metering !== undefined) {
             // Normalize metering from dB (-160 to 0) to 0-1
             const normalized = Math.max(0, Math.min(1, (status.metering + 60) / 60));
-            setAudioLevels(prev => {
+            setAudioLevels((prev: number[]) =>  {
               const newLevels = [...prev, normalized];
               // Keep last 50 levels
               return newLevels.slice(-50);

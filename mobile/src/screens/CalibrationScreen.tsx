@@ -19,7 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
-
+const AnimatedView = Animated.View as unknown as React.ComponentType<any>;
 const { width, height } = Dimensions.get('window');
 
 type CalibrationScreenProps = {
@@ -197,19 +197,19 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
           {/* Recording Indicator */}
           {isCalibrating && (
             <View style={styles.recordingContainer}>
-              <Animated.View
+              <AnimatedView style={[styles.recordingDot, { transform: [{ scale: pulseAnim }] }]} />
                 style={[
                   styles.recordingDot,
                   { transform: [{ scale: pulseAnim }] },
                 ]}
-              />
+              
               <Text style={styles.recordingText}>Recording</Text>
             </View>
           )}
 
           {/* Progress Bar */}
           <View style={styles.progressContainer}>
-            <Animated.View
+            <AnimatedView style={[styles.progressBar, { width: progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]} />
               style={[
                 styles.progressBar,
                 {
@@ -219,7 +219,7 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
                   }),
                 },
               ]}
-            />
+            
           </View>
 
           {/* Instruction Card */}
