@@ -6,14 +6,10 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-<<<<<<< HEAD
-import { Paths, File, Directory } from 'expo-file-system';
-=======
 import * as FileSystem from 'expo-file-system/legacy';
->>>>>>> bd678631c9091be61ac5bdf0074673e41413b26b
 
 const JOURNAL_STORAGE_KEY = '@truereact_voice_journal';
-const journalsDir = new Directory(Paths.document, 'journals');
+const JOURNALS_DIR = `${FileSystem.documentDirectory}journals/`;
 
 export type EmotionData = {
   primary: string;
@@ -58,9 +54,10 @@ export type JournalStats = {
 };
 
 // Ensure journal directory exists
-function ensureDirectoryExists(): void {
-  if (!journalsDir.exists) {
-    journalsDir.create({ intermediates: true });
+async function ensureDirectoryExists(): Promise<void> {
+  const dirInfo = await FileSystem.getInfoAsync(JOURNALS_DIR);
+  if (!dirInfo.exists) {
+    await FileSystem.makeDirectoryAsync(JOURNALS_DIR, { intermediates: true });
   }
 }
 
@@ -98,7 +95,7 @@ export async function createJournalEntry(params: {
   audioDuration: number;
   transcription?: string;
 }): Promise<JournalEntry> {
-  ensureDirectoryExists();
+  await ensureDirectoryExists();
   
   const id = generateId();
   let savedAudioUri = params.audioUri;
@@ -106,10 +103,9 @@ export async function createJournalEntry(params: {
   // Copy audio to permanent storage
   if (params.audioUri) {
     const fileName = `${id}.m4a`;
-    const sourceFile = new File(params.audioUri);
-    const destFile = new File(journalsDir, fileName);
-    sourceFile.copy(destFile);
-    savedAudioUri = destFile.uri;
+    const destUri = `${JOURNALS_DIR}${fileName}`;
+    await FileSystem.copyAsync({ from: params.audioUri, to: destUri });
+    savedAudioUri = destUri;
   }
   
   const entry: JournalEntry = {
@@ -162,9 +158,9 @@ export async function deleteJournalEntry(id: string): Promise<boolean> {
   // Delete audio file if exists
   if (entry.audioUri) {
     try {
-      const audioFile = new File(entry.audioUri);
-      if (audioFile.exists) {
-        audioFile.delete();
+      const fileInfo = await FileSystem.getInfoAsync(entry.audioUri);
+      if (fileInfo.exists) {
+        await FileSystem.deleteAsync(entry.audioUri);
       }
     } catch (error) {
       console.warn('Failed to delete audio file:', error);

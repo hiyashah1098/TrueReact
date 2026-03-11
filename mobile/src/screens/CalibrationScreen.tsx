@@ -311,11 +311,6 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
           {isCalibrating && (
             <View style={styles.recordingContainer}>
               <AnimatedView style={[styles.recordingDot, { transform: [{ scale: pulseAnim }] }]} />
-                style={[
-                  styles.recordingDot,
-                  { transform: [{ scale: pulseAnim }] },
-                ]}
-              
               <Text style={styles.recordingText}>Recording</Text>
             </View>
           )}
@@ -323,16 +318,6 @@ export default function CalibrationScreen({ navigation }: CalibrationScreenProps
           {/* Progress Bar */}
           <View style={styles.progressContainer}>
             <AnimatedView style={[styles.progressBar, { width: progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]} />
-              style={[
-                styles.progressBar,
-                {
-                  width: progressAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0%', '100%'],
-                  }),
-                },
-              ]}
-            
           </View>
 
           {/* Instruction Card */}

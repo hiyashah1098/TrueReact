@@ -6,11 +6,7 @@
  */
 
 import { Share, Platform, Alert } from 'react-native';
-<<<<<<< HEAD
-import { Paths, File } from 'expo-file-system';
-=======
 import * as FileSystem from 'expo-file-system/legacy';
->>>>>>> bd678631c9091be61ac5bdf0074673e41413b26b
 import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
 
@@ -165,10 +161,10 @@ export async function saveSessionAsFile(data: SessionExportData): Promise<string
     const content = formatSessionForExport(data);
     const filename = `truereact_session_${data.sessionId.slice(0, 8)}_${data.date.replace(/\//g, '-')}.txt`;
 
-    const file = new File(Paths.document, filename);
-    file.create({ overwrite: true });
-    file.write(content);
-    const fileUri = file.uri;
+    const fileUri = `${FileSystem.documentDirectory}${filename}`;
+    await FileSystem.writeAsStringAsync(fileUri, content, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
     
     // Check if sharing is available
     const isAvailable = await Sharing.isAvailableAsync();

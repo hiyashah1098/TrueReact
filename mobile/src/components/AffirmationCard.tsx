@@ -104,7 +104,7 @@ export function AffirmationCard({
     }).start(async () => {
       // Get a new random affirmation
       const newAffirmation = getRandomAffirmation();
-      setAffirmationData(prev => prev ? {
+      setAffirmationData((prev: DailyAffirmationData | null) => prev ? {
         ...prev,
         affirmation: newAffirmation,
       } : null);

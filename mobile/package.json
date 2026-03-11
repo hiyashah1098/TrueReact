@@ -29,13 +29,8 @@
     "expo-sharing": "~14.0.8",
     "expo-status-bar": "~3.0.9",
     "firebase": "^12.9.0",
-<<<<<<< HEAD
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-=======
     "react": "^19.1.4",
     "react-dom": "^19.1.0",
->>>>>>> bd678631c9091be61ac5bdf0074673e41413b26b
     "react-native": "^0.81.5",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-reanimated": "~4.1.1",

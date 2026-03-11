@@ -52,7 +52,7 @@ export default function SafeStateScreen({ navigation, route }: SafeStateScreenPr
   };
 
   const handleEndSession = () => {
-    navigation.navigate('Home');
+    navigation.navigate('MainTabs');
   };
 
   return (

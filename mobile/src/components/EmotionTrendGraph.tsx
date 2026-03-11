@@ -128,32 +128,33 @@ export default function EmotionTrendGraph({
               };
               
               return (
-                <View
-                  key={`${point.timestamp}-${index}`}
-                  style={[
-                    styles.barWrapper,
-                    { width: barWidth + barSpacing },
-                  ]}
-                >
-                  <View style={[styles.barBackground, { height: height - 30, backgroundColor: isDark ? '#2C2C2E' : '#E5E5EA' }]}>
-                    <Animated.View
-                      style={[
-                        styles.bar,
-                        {
-                          height: barHeight,
-                          backgroundColor: color,
-                          width: barWidth,
-                        },
-                        animatedStyle,
-                      ]}
-                    />
+                <React.Fragment key={`${point.timestamp}-${index}`}>
+                  <View
+                    style={[
+                      styles.barWrapper,
+                      { width: barWidth + barSpacing },
+                    ]}
+                  >
+                    <View style={[styles.barBackground, { height: height - 30, backgroundColor: isDark ? '#2C2C2E' : '#E5E5EA' }]}>
+                      <Animated.View
+                        style={[
+                          styles.bar,
+                          {
+                            height: barHeight,
+                            backgroundColor: color,
+                            width: barWidth,
+                          },
+                          animatedStyle,
+                        ]}
+                      />
+                    </View>
+                    
+                    {/* Emotion emoji indicator */}
+                    <Text style={styles.barEmoji}>
+                      {getEmotionEmoji(point.emotion)}
+                    </Text>
                   </View>
-                  
-                  {/* Emotion emoji indicator */}
-                  <Text style={styles.barEmoji}>
-                    {getEmotionEmoji(point.emotion)}
-                  </Text>
-                </View>
+                </React.Fragment>
               );
             })}
           </View>
@@ -163,17 +164,19 @@ export default function EmotionTrendGraph({
       {/* Legend */}
       <View style={styles.legend}>
         {getUniqueEmotions(data).map((emotion) => (
-          <View key={emotion} style={styles.legendItem}>
-            <View
-              style={[
-                styles.legendColor,
-                { backgroundColor: EMOTION_COLORS[emotion] || EMOTION_COLORS.neutral },
-              ]}
-            />
-            <Text style={[styles.legendText, { color: colors.textSecondary }]}>
-              {capitalizeFirst(emotion)}
-            </Text>
-          </View>
+          <React.Fragment key={emotion}>
+            <View style={styles.legendItem}>
+              <View
+                style={[
+                  styles.legendColor,
+                  { backgroundColor: EMOTION_COLORS[emotion] || EMOTION_COLORS.neutral },
+                ]}
+              />
+              <Text style={[styles.legendText, { color: colors.textSecondary }]}>
+                {capitalizeFirst(emotion)}
+              </Text>
+            </View>
+          </React.Fragment>
         ))}
       </View>
       
