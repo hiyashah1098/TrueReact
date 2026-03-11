@@ -149,6 +149,18 @@ export function useVoiceJournal(options: UseVoiceJournalOptions = {}): UseVoiceJ
 
   const startRecording = useCallback(async () => {
     try {
+      // Clean up any existing recording first
+      if (recordingRef.current) {
+        try {
+          await recordingRef.current.stopAndUnloadAsync();
+        } catch {
+          // Ignore cleanup errors
+        }
+        recordingRef.current = null;
+      }
+      stopDurationTracking();
+      stopLevelTracking();
+
       // Request permissions
       const { status } = await Audio.requestPermissionsAsync();
       if (status !== 'granted') {
@@ -183,9 +195,12 @@ export function useVoiceJournal(options: UseVoiceJournalOptions = {}): UseVoiceJ
       safeHaptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
       console.error('Failed to start recording:', error);
+      // Reset state on failure
+      recordingRef.current = null;
+      setState('idle');
       onError?.(error as Error);
     }
-  }, [onError, startDurationTracking, startLevelTracking]);
+  }, [onError, startDurationTracking, startLevelTracking, stopDurationTracking, stopLevelTracking]);
 
   const pauseRecording = useCallback(async () => {
     if (recordingRef.current && state === 'recording') {
@@ -334,28 +349,21 @@ export function useVoiceJournal(options: UseVoiceJournalOptions = {}): UseVoiceJ
 
 // Simulate transcription (placeholder for actual Speech-to-Text)
 async function simulateTranscription(durationSeconds: number): Promise<string> {
-  // Simulate processing time based on duration
-  await new Promise<void>(resolve => setTimeout(resolve, Math.min(durationSeconds * 50, 3000)));
+  // Quick processing - max 500ms
+  await new Promise<void>(resolve => setTimeout(resolve, Math.min(durationSeconds * 20, 500)));
   
-  // In production, this would call:
-  // - Google Cloud Speech-to-Text
-  // - OpenAI Whisper API
-  // - Expo Speech Recognition
-  
-  // Return placeholder text indicating real transcription would appear
-  const placeholders = [
-    "Today I've been feeling a bit anxious about the upcoming presentation at work. I know I've prepared well, but there's still this nervous energy that won't go away. I tried doing some breathing exercises earlier which helped a little. I'm grateful for the support from my team.",
-    "It's been a challenging day emotionally. I had a difficult conversation with a friend and I'm still processing my feelings about it. I notice I'm feeling a mix of sadness and frustration. Taking time to journal about this is helping me understand what I'm experiencing.",
-    "Feeling pretty good today! I managed to complete my morning routine and even had time for a short meditation. The weather is nice and I'm looking forward to having coffee with an old friend later. Small wins are adding up.",
-    "I woke up feeling overwhelmed by everything on my to-do list. There's so much to handle and I'm not sure where to start. I'm trying to be kind to myself and remember that I don't have to do everything at once. Breaking things down into smaller steps.",
-    "Reflecting on the past week and noticing some patterns in my mood. I tend to feel more anxious on Monday mornings and more relaxed by Friday. I want to work on establishing better routines to smooth out these fluctuations.",
-  ];
-  
-  return placeholders[Math.floor(Math.random() * placeholders.length)];
+  // NOTE: In production, integrate Google Cloud Speech-to-Text or OpenAI Whisper
+  // For now, return empty string - user can manually enter their thoughts
+  return '';
 }
 
 // Generate insights from transcription
 function generateInsights(text: string, emotions: { primary: string }[]): string[] {
+  // If no text provided, return default insight
+  if (!text || text.trim().length === 0) {
+    return ['Add your thoughts above to receive personalized insights.'];
+  }
+  
   const insights: string[] = [];
   const lowerText = text.toLowerCase();
   
@@ -382,6 +390,11 @@ function generateInsights(text: string, emotions: { primary: string }[]): string
   
   if (emotions.some(e => e.primary === 'happy') || emotions.some(e => e.primary === 'calm')) {
     insights.push('Positive emotions were present - take note of what contributed to this');
+  }
+  
+  // Default insight if none matched
+  if (insights.length === 0) {
+    insights.push('Keep journaling regularly - self-reflection builds emotional awareness');
   }
   
   // Limit to 3 insights

@@ -7,15 +7,27 @@
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
-  getAuth, 
+  initializeAuth,
+  getAuth,
   GoogleAuthProvider,
   signInWithCredential,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
-  User
+  User,
+  browserLocalPersistence,
+  indexedDBLocalPersistence,
+  browserSessionPersistence,
 } from 'firebase/auth';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+
+// Helper to get React Native persistence
+// @ts-ignore - Dynamic require for React Native persistence
+const getReactNativePersistence = Platform.OS !== 'web' 
+  ? require('@firebase/auth').getReactNativePersistence 
+  : null;
 import { 
   getFirestore, 
   collection, 
@@ -49,8 +61,29 @@ const firebaseConfig = {
 // Initialize Firebase (only if not already initialized)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Auth
-const auth = getAuth(app);
+// Initialize Auth with appropriate persistence based on platform
+let auth: ReturnType<typeof getAuth>;
+
+if (getApps().length === 1) {
+  // First initialization - configure persistence
+  if (Platform.OS === 'web') {
+    // Web uses browser persistence
+    auth = initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence]
+    });
+  } else if (getReactNativePersistence) {
+    // React Native uses AsyncStorage persistence
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+    });
+  } else {
+    // Fallback
+    auth = getAuth(app);
+  }
+} else {
+  // Already initialized, just get the instance
+  auth = getAuth(app);
+}
 
 // Initialize Firestore
 const db = getFirestore(app);

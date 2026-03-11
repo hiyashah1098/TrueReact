@@ -6,7 +6,14 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
+
+type UseAudioRecorderOptions = {
+  /** Called with base64 audio chunk data for streaming */
+  onAudioChunk?: (base64Audio: string) => void;
+  /** Interval in ms for capturing chunks (default: 1000) */
+  chunkInterval?: number;
+};
 
 type UseAudioRecorderReturn = {
   isRecording: boolean;
@@ -46,10 +53,11 @@ const RECORDING_OPTIONS: Audio.RecordingOptions = {
   },
 };
 
-// Interval for capturing audio chunks (ms)
-const CHUNK_INTERVAL = 1000;
+// Default interval for capturing audio chunks (ms)
+const DEFAULT_CHUNK_INTERVAL = 1000;
 
-export function useAudioRecorder(): UseAudioRecorderReturn {
+export function useAudioRecorder(options: UseAudioRecorderOptions = {}): UseAudioRecorderReturn {
+  const { onAudioChunk, chunkInterval = DEFAULT_CHUNK_INTERVAL } = options;
   const [isRecording, setIsRecording] = useState(false);
   const [audioData, setAudioData] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +99,17 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     try {
       setError(null);
 
+      // Clean up any existing recording first
+      if (recordingRef.current) {
+        try {
+          await recordingRef.current.stopAndUnloadAsync();
+        } catch {
+          // Ignore cleanup errors
+        }
+        recordingRef.current = null;
+      }
+      cleanup();
+
       // Request permissions
       const { status } = await Audio.requestPermissionsAsync();
       if (status !== 'granted') {
@@ -98,10 +117,24 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         return;
       }
 
-      // Create and start recording
-      const recording = new Audio.Recording();
-      await recording.prepareToRecordAsync(RECORDING_OPTIONS);
-      await recording.startAsync();
+      // Set audio mode for recording
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+
+      // Small delay to ensure audio mode is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Use the newer createAsync API which prepares and starts in one call
+      const { recording } = await Audio.Recording.createAsync(
+        RECORDING_OPTIONS,
+        undefined,
+        100 // metering update interval
+      );
 
       recordingRef.current = recording;
       setIsRecording(true);
@@ -112,7 +145,10 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       console.log('🎙️ Recording started');
     } catch (e) {
       console.error('Failed to start recording:', e);
-      setError('Failed to start recording');
+      setError('Failed to start recording: ' + (e instanceof Error ? e.message : String(e)));
+      // Reset state on failure
+      recordingRef.current = null;
+      setIsRecording(false);
     }
   }, []);
 
@@ -177,12 +213,16 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
           
           if (uri) {
             // Read the audio file as base64
-            // In production, this would be optimized to stream chunks
             const base64 = await FileSystem.readAsStringAsync(uri, {
               encoding: 'base64',
             });
             
             setAudioData(base64);
+            
+            // Stream to WebSocket via callback
+            if (onAudioChunk) {
+              onAudioChunk(base64);
+            }
           }
 
           // Also capture metering data for visual feedback
@@ -195,7 +235,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       } catch (e) {
         // Silent fail for chunk capture errors
       }
-    }, CHUNK_INTERVAL);
+    }, chunkInterval);
   };
 
   return {

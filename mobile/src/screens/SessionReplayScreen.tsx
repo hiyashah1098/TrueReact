@@ -32,7 +32,6 @@ import {
   addSessionNote,
   deleteSession,
   getRecentSessions,
-  generateDemoSession,
 } from '../services/sessionHistory';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -102,11 +101,6 @@ export default function SessionReplayScreen({ navigation }: any) {
   const handleDeleteSession = async (id: string) => {
     await deleteSession(id);
     setSelectedSession(null);
-    loadData();
-  };
-  
-  const handleGenerateDemo = async () => {
-    await generateDemoSession();
     loadData();
   };
   
@@ -584,10 +578,6 @@ export default function SessionReplayScreen({ navigation }: any) {
                 <Text style={styles.emptySubtitle}>
                   Complete a coaching session to see it here
                 </Text>
-                <TouchableOpacity style={styles.demoButton} onPress={handleGenerateDemo}>
-                  <Ionicons name="add-circle-outline" size={20} color="#9B7EC6" />
-                  <Text style={styles.demoButtonText}>Generate Demo Session</Text>
-                </TouchableOpacity>
               </View>
             ) : (
               <>

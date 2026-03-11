@@ -714,12 +714,15 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   categoryScroll: {
-    maxHeight: 48,
+    minHeight: 50,
+    maxHeight: 60,
     marginTop: 16,
   },
   categoryContainer: {
     paddingHorizontal: 20,
+    paddingVertical: 4,
     gap: 8,
+    alignItems: 'center',
   },
   categoryChip: {
     flexDirection: 'row',

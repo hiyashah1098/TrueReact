@@ -15,6 +15,7 @@ import {
   Animated,
   Dimensions,
   Modal,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
@@ -35,6 +36,21 @@ import {
 import { recordActivity } from '../services/gamification';
 
 const { width, height } = Dimensions.get('window');
+const isWeb = Platform.OS === 'web';
+
+// Safe haptics wrapper for web compatibility
+const safeHaptics = {
+  impact: (style: Haptics.ImpactFeedbackStyle) => {
+    if (!isWeb) {
+      Haptics.impactAsync(style).catch(() => {});
+    }
+  },
+  notification: (type: Haptics.NotificationFeedbackType) => {
+    if (!isWeb) {
+      Haptics.notificationAsync(type).catch(() => {});
+    }
+  },
+};
 
 type ViewMode = 'browse' | 'player';
 
@@ -114,7 +130,7 @@ export function MeditationScreen({ navigation }: { navigation: any }) {
   };
 
   const handleToggleFavorite = async (meditation: Meditation) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    safeHaptics.impact(Haptics.ImpactFeedbackStyle.Light);
     const isFav = await toggleMeditationFavorite(meditation.id);
     setFavorites(prev => 
       isFav ? [...prev, meditation.id] : prev.filter(id => id !== meditation.id)
@@ -122,7 +138,7 @@ export function MeditationScreen({ navigation }: { navigation: any }) {
   };
 
   const handleSelectMeditation = (meditation: Meditation) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    safeHaptics.impact(Haptics.ImpactFeedbackStyle.Medium);
     setSelectedMeditation(meditation);
     setViewMode('player');
     setCurrentStepIndex(0);
@@ -194,7 +210,7 @@ export function MeditationScreen({ navigation }: { navigation: any }) {
     if (!selectedMeditation) return;
     
     setIsPlaying(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    safeHaptics.impact(Haptics.ImpactFeedbackStyle.Medium);
     
     const currentStep = selectedMeditation.steps[currentStepIndex];
     if (currentStep.type === 'breathing' && currentStep.breathingPattern) {
@@ -243,7 +259,7 @@ export function MeditationScreen({ navigation }: { navigation: any }) {
       timerRef.current = null;
     }
     stopBreathingAnimation();
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    safeHaptics.impact(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handleComplete = async () => {
@@ -254,7 +270,7 @@ export function MeditationScreen({ navigation }: { navigation: any }) {
     stopBreathingAnimation();
     setIsPlaying(false);
     
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    safeHaptics.notification(Haptics.NotificationFeedbackType.Success);
     
     if (selectedMeditation && sessionStartRef.current) {
       // Save session
@@ -810,12 +826,15 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   categoryScroll: {
-    maxHeight: 44,
+    minHeight: 50,
+    maxHeight: 60,
     marginBottom: 16,
   },
   categoryContainer: {
     paddingHorizontal: 16,
+    paddingVertical: 4,
     gap: 8,
+    alignItems: 'center',
   },
   categoryChip: {
     flexDirection: 'row',

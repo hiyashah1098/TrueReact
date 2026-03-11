@@ -358,7 +358,6 @@ TrueReact implements comprehensive **Safe-State Logic** via the SafetyAgent:
 4. **Neurodivergent-Friendly**: Specifically designed to help with masking and flat affect
 5. **Evidence-Based Grounding**: Multi-source fallback (Vertex AI → Google Search → Local Library)
 6. **Privacy-First**: On-device processing where possible, encrypted streams
-7. **Demo Mode**: Full functionality offline for hackathon demonstrations
 
 ## 📱 Feature Highlights
 
@@ -426,17 +425,7 @@ TrueReact is now available as a Progressive Web App:
 - No installation required
 - Works on Chrome, Firefox, Safari, and Edge
 
-## 🎮 Demo Mode
-
-TrueReact includes a fully-functional **offline demo mode** for presentations:
-
-- Simulates real-time emotion updates every 3 seconds
-- Provides sample coaching feedback every 10 seconds
-- Demonstrates emotion visualization with varying intensities
-- Shows congruence tracking and masking detection
-- Works without backend connection
-
-## � Third-Party Integrations
+## 📦 Third-Party Integrations
 
 TrueReact uses the following third-party tools and libraries in accordance with their respective licenses:
 

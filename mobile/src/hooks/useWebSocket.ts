@@ -15,7 +15,6 @@ type WebSocketMessage = {
 type UseWebSocketReturn = {
   isConnected: boolean;
   isConnecting: boolean;
-  isDemoMode: boolean;
   error: string | null;
   lastMessage: WebSocketMessage | null;
   connect: () => Promise<void>;
@@ -35,7 +34,6 @@ const HEARTBEAT_INTERVAL = 30000;
 export function useWebSocket(): UseWebSocketReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isDemoMode, setIsDemoMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   
@@ -50,26 +48,20 @@ export function useWebSocket(): UseWebSocketReturn {
       return;
     }
 
-    // If already in demo mode, just resolve
-    if (isDemoMode) {
-      return Promise.resolve();
-    }
-
     setIsConnecting(true);
     setError(null);
 
     return new Promise((resolve, reject) => {
       // Set a connection timeout
       const connectionTimeout = setTimeout(() => {
-        console.log('⏱️ WebSocket connection timeout, entering demo mode');
+        console.log('⏱️ WebSocket connection timeout');
         setIsConnecting(false);
-        setIsDemoMode(true);
-        setError(null);
+        setError('Connection timeout - please ensure the backend server is running');
         if (wsRef.current) {
           wsRef.current.close();
           wsRef.current = null;
         }
-        resolve(); // Resolve instead of reject to allow demo mode
+        resolve();
       }, 5000);
 
       try {
@@ -81,7 +73,7 @@ export function useWebSocket(): UseWebSocketReturn {
           console.log('🔌 WebSocket connected');
           setIsConnected(true);
           setIsConnecting(false);
-          setIsDemoMode(false);
+          setError(null);
           reconnectAttempts.current = 0;
           startHeartbeat();
           resolve();
@@ -94,21 +86,24 @@ export function useWebSocket(): UseWebSocketReturn {
           setIsConnecting(false);
           stopHeartbeat();
 
-          // Attempt reconnection if appropriate (but not in demo mode)
-          if (!isDemoMode && shouldReconnect.current && reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
+          // Only attempt reconnection for unexpected closures (not manual disconnect)
+          // Don't reconnect if connection was refused (backend not running)
+          const isConnectionRefused = event.reason?.includes('refused') || event.code === 1006;
+          if (!isConnectionRefused && shouldReconnect.current && reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
             reconnectAttempts.current++;
             console.log(`🔄 Reconnecting (${reconnectAttempts.current}/${MAX_RECONNECT_ATTEMPTS})...`);
             setTimeout(() => connect(), RECONNECT_DELAY);
+          } else if (isConnectionRefused) {
+            setError('Backend server is not running. Start the backend to enable real-time features.');
           }
         };
 
         wsRef.current.onerror = (event) => {
           clearTimeout(connectionTimeout);
-          console.log('⚠️ WebSocket error, entering demo mode');
+          console.log('⚠️ WebSocket error');
           setIsConnecting(false);
-          setIsDemoMode(true);
-          setError(null); // Clear error since we're in demo mode
-          resolve(); // Resolve to allow demo mode instead of failing
+          setError('Connection failed - please check your network and try again');
+          resolve();
         };
 
         wsRef.current.onmessage = (event) => {
@@ -188,7 +183,6 @@ export function useWebSocket(): UseWebSocketReturn {
   return {
     isConnected,
     isConnecting,
-    isDemoMode,
     error,
     lastMessage,
     connect,
