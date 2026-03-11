@@ -3,6 +3,7 @@
  * 
  * Main coaching session interface with real-time video/audio streaming,
  * emotion visualization, coaching feedback overlays, and barge-in interrupt capability.
+ * Supports both mobile and web platforms.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -18,6 +19,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Audio } from 'expo-av';
@@ -30,12 +32,14 @@ import { useWebSocket } from '../hooks/useWebSocket';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { useAuth } from '../context/AuthContext';
 import { saveSession, CoachingFeedbackEntry } from '../services/firebase';
+import { createSessionSummary, EmotionTimestamp, CoachingMoment } from '../services/sessionHistory';
 import CoachingFeedbackOverlay from '../components/CoachingFeedbackOverlay';
 import InterruptModal from '../components/InterruptModal';
 import EmotionVisualizer, { EmotionState } from '../components/EmotionVisualizer';
 import EmotionTrendGraph, { EmotionDataPoint } from '../components/EmotionTrendGraph';
 const AnimatedView = Animated.View as unknown as React.ComponentType<any>;
 const { width, height } = Dimensions.get('window');
+const isWeb = Platform.OS === 'web';
 
 type SessionScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Session'>;
@@ -53,7 +57,7 @@ type SessionState = 'connecting' | 'active' | 'paused' | 'safe_state' | 'ended';
 
 export default function SessionScreen({ navigation }: SessionScreenProps) {
   const { user } = useAuth();
-  const [cameraPermission] = useCameraPermissions();
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [sessionState, setSessionState] = useState<SessionState>('connecting');
   const [currentFeedback, setCurrentFeedback] = useState<CoachingFeedback | null>(null);
   const [feedbackHistory, setFeedbackHistory] = useState<CoachingFeedback[]>([]);
@@ -64,6 +68,8 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [sessionStartTime] = useState<Date>(new Date());
   const [safeStateTriggered, setSafeStateTriggered] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
   
   // Emotion visualization state
   const [emotionState, setEmotionState] = useState<EmotionState>({
@@ -84,7 +90,7 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
   // WebSocket connection
   const { 
     isConnected, 
-    isDemoMode,
+    error: wsError,
     sendMessage, 
     lastMessage,
     connect,
@@ -125,58 +131,6 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     return () => clearInterval(timer);
   }, [sessionState]);
 
-  // Demo mode feedback
-  useEffect(() => {
-    let demoTimer: ReturnType<typeof setTimeout> | null = null;
-    let demoInterval: ReturnType<typeof setInterval> | null = null;
-    let emotionInterval: ReturnType<typeof setInterval> | null = null;
-
-    // Demo emotions for variety
-    const demoEmotions = ['happy', 'neutral', 'excited', 'calm', 'anxious', 'focused'];
-    
-    if (isDemoMode && sessionState === 'active') {
-      // Initial feedback after 5 seconds
-      demoTimer = setTimeout(() => {
-        const randomFeedback = demoFeedback[Math.floor(Math.random() * demoFeedback.length)];
-        handleCoachingFeedback({ ...randomFeedback, timestamp: Date.now() });
-      }, 5000);
-
-      // Recurring feedback every 10 seconds
-      demoInterval = setInterval(() => {
-        const randomFeedback = demoFeedback[Math.floor(Math.random() * demoFeedback.length)];
-        handleCoachingFeedback({ ...randomFeedback, timestamp: Date.now() });
-      }, 10000);
-
-      // Simulate emotion updates every 3 seconds
-      emotionInterval = setInterval(() => {
-        const randomEmotion = demoEmotions[Math.floor(Math.random() * demoEmotions.length)];
-        const intensity = 0.3 + Math.random() * 0.6; // 0.3 - 0.9
-        const congruence = 0.5 + Math.random() * 0.5; // 0.5 - 1.0
-        
-        handleEmotionUpdate({
-          emotion: {
-            primary_emotion: randomEmotion,
-            intensity: intensity,
-            confidence: 0.7 + Math.random() * 0.25,
-            congruence_score: congruence,
-            masking_detected: Math.random() < 0.1, // 10% chance
-          },
-          trend: {
-            trend: Math.random() > 0.5 ? 'increasing' : 'stable',
-            dominant_emotion: randomEmotion,
-            average_intensity: intensity,
-          },
-        });
-      }, 3000);
-    }
-
-    return () => {
-      if (demoTimer) clearTimeout(demoTimer);
-      if (demoInterval) clearInterval(demoInterval);
-      if (emotionInterval) clearInterval(emotionInterval);
-    };
-  }, [isDemoMode, sessionState]);
-
   // Send audio data when available
   useEffect(() => {
     if (audioData && isConnected) {
@@ -210,67 +164,35 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     }
   }, [isProcessing]);
 
-  // Demo mode feedback samples
-  const demoFeedback: CoachingFeedback[] = [
-    {
-      category: 'expression',
-      observation: 'Your eyebrows appear slightly raised',
-      suggestion: 'Try relaxing your forehead to appear more at ease',
-      urgency: 'low',
-      timestamp: Date.now(),
-    },
-    {
-      category: 'voice',
-      observation: 'Your speech pace seems a bit fast',
-      suggestion: 'Take a breath between sentences to slow down naturally',
-      urgency: 'normal',
-      timestamp: Date.now(),
-    },
-    {
-      category: 'general',
-      observation: 'Great eye contact!',
-      suggestion: 'Keep maintaining this natural connection',
-      urgency: 'low',
-      timestamp: Date.now(),
-    },
-    {
-      category: 'posture',
-      observation: 'Shoulders appear tense',
-      suggestion: 'Roll your shoulders back and relax',
-      urgency: 'normal',
-      timestamp: Date.now(),
-    },
-  ];
-
-  const startDemoFeedback = () => {
-    // Provide demo feedback every 8-12 seconds
-    const provideDemoFeedback = () => {
-      if (sessionState === 'active') {
-        const randomFeedback = demoFeedback[Math.floor(Math.random() * demoFeedback.length)];
-        handleCoachingFeedback({ ...randomFeedback, timestamp: Date.now() });
-      }
-    };
-
-    // Initial feedback after 5 seconds
-    setTimeout(provideDemoFeedback, 5000);
-    
-    // Recurring feedback
-    const interval = setInterval(() => {
-      if (sessionState === 'active') {
-        provideDemoFeedback();
-      }
-    }, 10000);
-
-    return () => clearInterval(interval);
-  };
-
   const initializeSession = async () => {
     try {
+      // Request permissions first (especially important for web)
+      if (isWeb) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: true, 
+            audio: true 
+          });
+          stream.getTracks().forEach(track => track.stop());
+        } catch (err: any) {
+          console.error('Web permission error:', err);
+          setPermissionError(err.name === 'NotAllowedError' 
+            ? 'Camera/microphone access denied. Please enable in browser settings.' 
+            : 'Unable to access camera/microphone.');
+          setSessionState('ended');
+          return;
+        }
+      }
+      
       // Try to connect to backend (will enter demo mode if unavailable)
       await connect();
       
-      // Start audio recording
-      await startRecording();
+      // Start audio recording (non-blocking - session can continue without it)
+      try {
+        await startRecording();
+      } catch (recordingError) {
+        console.warn('Audio recording failed to start, continuing without audio:', recordingError);
+      }
       
       // Start video frame capture
       startVideoCapture();
@@ -284,6 +206,10 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
       // Still allow session to start in demo mode
       setSessionState('active');
     }
+  };
+
+  const handleCameraReady = () => {
+    setCameraReady(true);
   };
 
   const cleanupSession = async () => {
@@ -380,11 +306,11 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
       return updated.slice(-30);
     });
     
-    // Haptic feedback for significant changes
-    if (newEmotionState.maskingDetected) {
+    // Haptic feedback for significant changes (mobile only)
+    if (!isWeb && newEmotionState.maskingDetected) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    if (newEmotionState.congruenceScore < 0.6) {
+    if (!isWeb && newEmotionState.congruenceScore < 0.6) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
@@ -411,25 +337,28 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     setCurrentFeedback(feedback);
     setFeedbackHistory((prev: CoachingFeedback[]) => [...prev, feedback]);
 
-    // Haptic feedback based on urgency
-    if (feedback.urgency === 'high') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    } else {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Haptic feedback based on urgency (mobile only)
+    if (!isWeb) {
+      if (feedback.urgency === 'high') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      } else {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     }
 
     // Animate feedback in
+    // Note: useNativeDriver: false because CoachingFeedbackOverlay animates width
     Animated.sequence([
       Animated.timing(feedbackAnim, {
         toValue: 1,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.delay(5000),
       Animated.timing(feedbackAnim, {
         toValue: 0,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
     ]).start(() => {
       setCurrentFeedback(null);
@@ -443,7 +372,9 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
 
   const handleBargeIn = () => {
     setShowInterruptModal(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (!isWeb) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
   };
 
   const submitInterrupt = async () => {
@@ -452,20 +383,10 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     setIsProcessing(true);
     setInterruptResponse(null);
 
-    if (isDemoMode) {
-      // Simulate response in demo mode
-      setTimeout(() => {
-        const demoResponses: Record<string, string> = {
-          'Did that sound sarcastic?': 'Based on your tone and expression, your delivery appeared sincere. Your eyebrows were relaxed and your voice had a warm quality.',
-          'Was I speaking too fast?': 'Your pace was moderate - about 140 words per minute, which is comfortable for conversation. You could slow down slightly for emphasis on key points.',
-          'Did my expression match my words?': 'Your facial expression aligned well with your message. I noticed genuine micro-expressions around your eyes that matched your verbal content.',
-          'How\'s my eye contact?': 'Your eye contact has been steady and natural - you\'re looking at the camera about 70% of the time, which creates good connection without being intense.',
-        };
-        const response = demoResponses[interruptQuestion] || 
-          'In demo mode, I can see you\'re practicing your social signals. Your expression appears engaged and your posture is open. Keep up the great work!';
-        setInterruptResponse(response);
-        setIsProcessing(false);
-      }, 1500);
+    if (!isConnected) {
+      // Cannot submit without connection
+      setInterruptResponse('Unable to process - please ensure you are connected to the backend server.');
+      setIsProcessing(false);
     } else {
       sendMessage({
         type: 'interrupt',
@@ -491,13 +412,44 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     sendMessage({ type: 'end' });
     cleanupSession();
     
+    const endTime = new Date();
+    
+    // Save session to local storage for replay
+    try {
+      // Convert emotionHistory to EmotionTimestamp format
+      const emotionTimeline: EmotionTimestamp[] = emotionHistory.map((e, index) => ({
+        time: Math.floor((e.timestamp - sessionStartTime.getTime()) / 1000),
+        emotion: e.emotion,
+        intensity: e.intensity,
+        confidence: 0.8, // Default confidence
+      }));
+      
+      // Convert feedbackHistory to CoachingMoment format
+      const coachingMoments: CoachingMoment[] = feedbackHistory.map(f => ({
+        time: Math.floor((f.timestamp - sessionStartTime.getTime()) / 1000),
+        type: f.category === 'general' ? 'suggestion' : 'intervention' as const,
+        content: f.suggestion,
+      }));
+      
+      await createSessionSummary({
+        type: 'coaching',
+        startTime: sessionStartTime,
+        endTime: endTime,
+        emotionTimeline,
+        coachingMoments,
+      });
+      console.log('Session saved to local storage');
+    } catch (error) {
+      console.error('Failed to save session to local storage:', error);
+    }
+    
     // Save session to Firestore
     if (user && feedbackHistory.length > 0) {
       try {
         const sessionData = {
           odId: user.uid,
           startedAt: sessionStartTime,
-          endedAt: new Date(),
+          endedAt: endTime,
           duration: sessionDuration,
           feedbackCount: feedbackHistory.length,
           feedback: feedbackHistory.map((f: CoachingFeedback) => ({
@@ -526,14 +478,58 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Permission error state for web
+  if (permissionError) {
+    return (
+      <LinearGradient colors={['#1A1625', '#252136']} style={styles.container}>
+        <View style={styles.permissionErrorContainer}>
+          <Ionicons name="warning-outline" size={64} color="#E94560" />
+          <Text style={styles.permissionErrorTitle}>Permission Error</Text>
+          <Text style={styles.permissionErrorText}>{permissionError}</Text>
+          {isWeb && (
+            <Text style={[styles.permissionErrorText, { marginTop: 12, fontSize: 13 }]}>
+              Click the camera icon in your browser's address bar to manage permissions.
+            </Text>
+          )}
+          <TouchableOpacity 
+            style={styles.permissionRetryButton} 
+            onPress={() => {
+              setPermissionError(null);
+              initializeSession();
+            }}
+          >
+            <Text style={styles.permissionRetryText}>Try Again</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.permissionRetryButton, { backgroundColor: '#4A5568', marginTop: 12 }]} 
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.permissionRetryText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      {/* Camera View */}
+      {/* Camera View - no children to avoid deprecation warning */}
       <CameraView
         ref={cameraRef}
         style={styles.camera}
         facing="front"
-      >
+        onCameraReady={handleCameraReady}
+      />
+
+      {/* All overlays positioned absolutely on top of camera */}
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        {/* Loading overlay while camera initializes */}
+        {!cameraReady && (
+          <View style={styles.cameraLoadingOverlay}>
+            <ActivityIndicator size="large" color="#F5A623" />
+            <Text style={{ color: '#fff', marginTop: 12 }}>Starting camera...</Text>
+          </View>
+        )}
         {/* Top Bar */}
         <LinearGradient
           colors={['rgba(26, 26, 46, 0.8)', 'transparent']}
@@ -546,14 +542,9 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
                 { backgroundColor: sessionState === 'active' ? '#4ade80' : '#fbbf24' }
               ]} />
               <Text style={styles.statusText}>
-                {sessionState === 'active' ? (isDemoMode ? 'Demo' : 'Live') : 'Paused'}
+                {sessionState === 'active' ? 'Live' : 'Paused'}
               </Text>
             </View>
-            {isDemoMode && (
-              <View style={styles.demoBadge}>
-                <Text style={styles.demoBadgeText}>Offline Mode</Text>
-              </View>
-            )}
             <Text style={styles.duration}>{formatDuration(sessionDuration)}</Text>
           </View>
           
@@ -641,7 +632,7 @@ export default function SessionScreen({ navigation }: SessionScreenProps) {
             </TouchableOpacity>
           )}
         </LinearGradient>
-      </CameraView>
+      </View>
 
       {/* Interrupt Modal */}
       <InterruptModal
@@ -681,6 +672,43 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+  },
+  cameraLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(26, 22, 37, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  permissionErrorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  permissionErrorTitle: {
+    color: '#F5F0E8',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  permissionErrorText: {
+    color: '#B8B0C8',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  permissionRetryButton: {
+    backgroundColor: '#F5A623',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+  },
+  permissionRetryText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   topBar: {
     flexDirection: 'row',

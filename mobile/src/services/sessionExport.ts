@@ -6,7 +6,11 @@
  */
 
 import { Share, Platform, Alert } from 'react-native';
+<<<<<<< HEAD
 import { Paths, File } from 'expo-file-system';
+=======
+import * as FileSystem from 'expo-file-system/legacy';
+>>>>>>> bd678631c9091be61ac5bdf0074673e41413b26b
 import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
 

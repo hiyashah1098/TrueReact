@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#1a1a2e"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.truereact.app",
@@ -47,7 +49,8 @@
         {
           "microphonePermission": "TrueReact needs microphone access for voice analysis."
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }

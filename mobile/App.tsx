@@ -8,9 +8,12 @@ import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, ActivityIndicator, View } from 'react-native';
+import { StyleSheet, ActivityIndicator, View, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useFonts } from 'expo-font';
 
 // Screens
 import HomeScreen from './src/screens/HomeScreen';
@@ -41,54 +44,118 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 // Types
 export type RootStackParamList = {
   Login: undefined;
-  Home: undefined;
+  MainTabs: undefined;
   Calibration: undefined;
   Session: { sessionId?: string };
-  Settings: undefined;
   SafeState: { resources?: any };
   History: undefined;
   Techniques: undefined;
   Help: undefined;
   Community: undefined;
   Chat: { conversationId: string; otherUserId: string; displayName: string };
-  // New Feature Routes
   VoiceJournal: undefined;
-  Achievements: undefined;
   Meditation: { meditationId?: string } | undefined;
   SessionReplay: { sessionId?: string } | undefined;
   PersonalizedTechniques: { emotion?: string } | undefined;
+};
+
+export type TabParamList = {
+  Home: undefined;
+  Explore: undefined;
+  Progress: undefined;
   Safety: undefined;
+  Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator<TabParamList>();
+
+// Import useTheme inside a separate component since MainTabs is inside providers
+import { useTheme } from './src/context/ThemeContext';
+
+// Tab Navigator with dynamic theming
+function MainTabs() {
+  const { colors, isDark } = useTheme();
+  
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: colors.background,
+          borderTopColor: isDark ? 'rgba(155, 126, 198, 0.2)' : 'rgba(123, 104, 176, 0.15)',
+          borderTopWidth: 1,
+          paddingTop: 8,
+          paddingBottom: 25,
+          height: 85,
+        },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: 4,
+        },
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: keyof typeof Ionicons.glyphMap = 'home';
+          
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Explore') {
+            iconName = focused ? 'compass' : 'compass-outline';
+          } else if (route.name === 'Progress') {
+            iconName = focused ? 'trophy' : 'trophy-outline';
+          } else if (route.name === 'Safety') {
+            iconName = focused ? 'shield-checkmark' : 'shield-checkmark-outline';
+          } else if (route.name === 'Settings') {
+            iconName = focused ? 'settings' : 'settings-outline';
+          }
+
+          return <Ionicons name={iconName} size={24} color={color} />;
+        },
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen 
+        name="Explore" 
+        component={PersonalizedTechniquesScreen}
+        options={{ tabBarLabel: 'For You' }}
+      />
+      <Tab.Screen name="Progress" component={AchievementsScreen} />
+      <Tab.Screen name="Safety" component={SafetyScreen} />
+      <Tab.Screen name="Settings" component={SettingsScreen} />
+    </Tab.Navigator>
+  );
+}
 
 // Navigation component that uses auth state
 function AppNavigator() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { colors, isDark } = useTheme();
 
   // Show loading screen while checking auth state
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#e94560" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
     <NavigationContainer>
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? "light" : "dark"} />
       <Stack.Navigator
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#1a1a2e',
+            backgroundColor: colors.background,
           },
-          headerTintColor: '#fff',
+          headerTintColor: colors.text,
           headerTitleStyle: {
             fontWeight: 'bold',
           },
           contentStyle: {
-            backgroundColor: '#1a1a2e',
+            backgroundColor: colors.background,
           },
         }}
       >
@@ -100,12 +167,12 @@ function AppNavigator() {
             options={{ headerShown: false }}
           />
         ) : (
-          // App screens
+          // App screens with tabs
           <>
             <Stack.Screen 
-              name="Home" 
-              component={HomeScreen}
-              options={{ title: 'TrueReact' }}
+              name="MainTabs" 
+              component={MainTabs}
+              options={{ headerShown: false }}
             />
             <Stack.Screen 
               name="Calibration" 
@@ -119,11 +186,6 @@ function AppNavigator() {
                 title: 'Coaching Session',
                 headerShown: false 
               }}
-            />
-            <Stack.Screen 
-              name="Settings" 
-              component={SettingsScreen}
-              options={{ title: 'Settings' }}
             />
             <Stack.Screen 
               name="SafeState" 
@@ -173,21 +235,11 @@ function AppNavigator() {
                 headerShown: false 
               }}
             />
-            
-            {/* New Feature Screens */}
             <Stack.Screen 
               name="VoiceJournal" 
               component={VoiceJournalScreen}
               options={{ 
                 title: 'Voice Journal',
-                headerShown: false 
-              }}
-            />
-            <Stack.Screen 
-              name="Achievements" 
-              component={AchievementsScreen}
-              options={{ 
-                title: 'Achievements',
                 headerShown: false 
               }}
             />
@@ -215,14 +267,6 @@ function AppNavigator() {
                 headerShown: false 
               }}
             />
-            <Stack.Screen 
-              name="Safety" 
-              component={SafetyScreen}
-              options={{ 
-                title: 'Safety',
-                headerShown: false 
-              }}
-            />
           </>
         )}
       </Stack.Navigator>
@@ -231,6 +275,21 @@ function AppNavigator() {
 }
 
 export default function App() {
+  // Load Ionicons font for web compatibility
+  const [fontsLoaded] = useFonts({
+    ...Ionicons.font,
+  });
+
+  // Show loading screen while fonts are loading
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#9B7EC6" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
@@ -255,5 +314,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#1a1a2e',
+  },
+  loadingText: {
+    color: '#9B7EC6',
+    marginTop: 12,
+    fontSize: 16,
   },
 });

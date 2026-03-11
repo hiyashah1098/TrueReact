@@ -6,7 +6,11 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+<<<<<<< HEAD
 import { Paths, File, Directory } from 'expo-file-system';
+=======
+import * as FileSystem from 'expo-file-system/legacy';
+>>>>>>> bd678631c9091be61ac5bdf0074673e41413b26b
 
 const JOURNAL_STORAGE_KEY = '@truereact_voice_journal';
 const journalsDir = new Directory(Paths.document, 'journals');

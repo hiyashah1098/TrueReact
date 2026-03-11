@@ -4,7 +4,21 @@
 
 TrueReact helps users align their internal intent with their external social signals (facial expressions, tone, and pacing) using the power of Gemini Live API and a sophisticated multi-agent architecture.
 
-## 🎯 Mission
+## � Live Demo
+
+**Web App:** [https://truereact.surge.sh](https://truereact.surge.sh)
+
+> Access TrueReact directly from your browser - no installation required! Works on desktop and mobile browsers.
+
+## 📱 Platforms
+
+| Platform | Status | Access |
+|----------|--------|--------|
+| **Web** | ✅ Live | [truereact.surge.sh](https://truereact.surge.sh) |
+| **iOS** | ✅ Ready | Run locally with Expo Go |
+| **Android** | ✅ Ready | Run locally with Expo Go |
+
+## �🎯 Mission
 
 TrueReact isn't a chatbot—it's a persistent, "eyes-on" companion that provides:
 
@@ -62,6 +76,73 @@ TrueReact isn't a chatbot—it's a persistent, "eyes-on" companion that provides
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
+### Architecture Diagram (Mermaid)
+
+```mermaid
+flowchart TB
+    subgraph Client["📱 React Native Mobile App"]
+        Camera["🎥 Camera Module"]
+        Mic["🎤 Microphone"]
+        UI["💬 UI Components"]
+        EmotionRing["🎯 Emotion Ring"]
+    end
+
+    subgraph CloudRun["☁️ Google Cloud Run (ADK Backend)"]
+        WS["WebSocket Handler"]
+        Session["Session Manager"]
+        
+        subgraph Agents["🤖 Multi-Agent Pipeline"]
+            Emotion["EmotionAgent\n(Facial/Vocal Analysis)"]
+            Safety["SafetyAgent\n(Distress Detection)"]
+            Research["ResearchAgent\n(CBT/DBT Grounding)"]
+            Coaching["CoachingAgent\n(Personalized Feedback)"]
+        end
+        
+        Orchestrator["Orchestrator"]
+    end
+
+    subgraph GeminiAPI["🧠 Gemini Live API"]
+        Multimodal["Multimodal Processing\n• Video Analysis\n• Audio Processing\n• Real-time Inference"]
+        Streaming["Bidirectional Streaming\n• Low Latency\n• Barge-in Support"]
+    end
+
+    subgraph Grounding["📚 Grounding Layer"]
+        Vertex["Vertex AI Search"]
+        GoogleSearch["Google Search"]
+        LocalLib["Local CBT/DBT Library"]
+    end
+
+    subgraph Observability["📊 Cloud Logging & Monitoring"]
+        Logs["Session Logs"]
+        Metrics["Signal Metrics"]
+        Alerts["Alert Policies"]
+    end
+
+    Camera & Mic -->|"Video + Audio Frames"| WS
+    WS --> Session
+    Session --> Orchestrator
+    
+    Orchestrator --> Emotion
+    Emotion --> Safety
+    Safety --> Research
+    Research --> Coaching
+    Coaching --> Orchestrator
+    
+    Orchestrator <-->|"gRPC/REST"| Multimodal
+    Multimodal <--> Streaming
+    
+    Research --> Vertex
+    Research --> GoogleSearch
+    Research --> LocalLib
+    
+    Orchestrator -->|"Coaching Feedback"| WS
+    WS -->|"Real-time Updates"| UI & EmotionRing
+    
+    Session --> Logs
+    Orchestrator --> Metrics
+    Safety --> Alerts
+```
+
 ## 🤖 Multi-Agent Architecture (ADK)
 
 TrueReact uses a sophisticated **Agent Development Kit (ADK)** pipeline with specialized agents:
@@ -117,51 +198,65 @@ The mobile app features **live emotion feedback**:
 | Component | Technology | Role |
 |-----------|------------|------|
 | Frontend | React Native + Expo SDK 54 | Captures real-time audio/video streams, emotion visualization |
+| Web | React Native Web | Cross-platform web app with shared codebase |
 | Live Logic | Gemini Live API | Processes bidirectional, low-latency multimodal streams |
 | Backend | FastAPI + Cloud Run | Hosts multi-agent orchestration layer (ADK pattern) |
 | Grounding | Vertex AI Search + Google Search | Multi-source evidence-based grounding with fallback |
 | Database | Firebase Firestore | User data, session history, techniques progress |
 | Auth | Firebase Auth | Secure user authentication |
+| Hosting | Surge.sh | Static web app hosting |
 | Observability | Cloud Logging | Provides the "GCP Proof" required for submission |
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 18+ (see `.nvmrc` - run `nvm use` if using nvm)
 - Python 3.11+
-- Google Cloud SDK
-- React Native CLI
-- Expo CLI
+- Google Cloud SDK (optional, for production features)
 
 ### Installation
 
-1. **Clone and install frontend dependencies:**
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/hiyashah1098/TrueReact.git
+   cd TrueReact
+   ```
+
+2. **Set up the mobile app:**
    ```bash
    cd mobile
    npm install
+   npx expo install   # Links native dependencies
    ```
 
-2. **Set up backend:**
+3. **Set up the backend:**
    ```bash
    cd backend
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    pip install -r requirements.txt
+   cp .env.example .env      # Then edit .env with your API keys
    ```
 
-3. **Configure GCP credentials:**
+4. **Configure environment variables:**
+   - Edit `backend/.env` with your Google Cloud project ID and Gemini API key
+   - Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
+
+5. **Run locally:**
    ```bash
-   export GOOGLE_CLOUD_PROJECT=your-project-id
-   gcloud auth application-default login
+   # Backend (from backend directory)
+   uvicorn src.main:app --reload --host 0.0.0.0 --port 8080
+
+   # Mobile (in separate terminal, from mobile directory)
+   npx expo start
    ```
 
-4. **Run locally:**
-   ```bash
-   # Backend
-   cd backend && python main.py
+### Troubleshooting
 
-   # Mobile (in separate terminal)
-   cd mobile && npx expo start
-   ```
+- **"Module not found" errors**: Run `npx expo install` in the mobile directory
+- **Backend won't start**: Ensure you've activated the venv and created `.env` from `.env.example`
+- **WebSocket connection fails**: Check that backend is running on port 8080
 
 ## 📁 Project Structure
 
@@ -275,7 +370,6 @@ TrueReact implements comprehensive **Safe-State Logic** via the SafetyAgent:
 4. **Neurodivergent-Friendly**: Specifically designed to help with masking and flat affect
 5. **Evidence-Based Grounding**: Multi-source fallback (Vertex AI → Google Search → Local Library)
 6. **Privacy-First**: On-device processing where possible, encrypted streams
-7. **Demo Mode**: Full functionality offline for hackathon demonstrations
 
 ## 📱 Feature Highlights
 
@@ -327,17 +421,23 @@ Comprehensive safety features for emergency situations:
 - Crisis resource directory
 - Pattern analysis for early intervention
 
-## 🎮 Demo Mode
+### 🗑️ Session History Management
+Full control over your session data:
+- View complete history of past coaching sessions
+- Delete individual sessions with confirmation
+- Clear all session history at once
+- Cross-platform support (mobile and web)
+- Real-time sync with Firebase
 
-TrueReact includes a fully-functional **offline demo mode** for presentations:
+### 🌐 Web App Support
+TrueReact is now available as a Progressive Web App:
+- Full feature parity with mobile app
+- Browser-based camera and microphone access
+- Responsive design for desktop and mobile browsers
+- No installation required
+- Works on Chrome, Firefox, Safari, and Edge
 
-- Simulates real-time emotion updates every 3 seconds
-- Provides sample coaching feedback every 10 seconds
-- Demonstrates emotion visualization with varying intensities
-- Shows congruence tracking and masking detection
-- Works without backend connection
-
-## � Third-Party Integrations
+## 📦 Third-Party Integrations
 
 TrueReact uses the following third-party tools and libraries in accordance with their respective licenses:
 

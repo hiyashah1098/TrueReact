@@ -16,11 +16,38 @@ import {
   ActivityIndicator,
   Modal,
   ScrollView,
+  Alert,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { getSessionHistory, CoachingSession, CoachingFeedbackEntry } from '../services/firebase';
+import { getSessionHistory, deleteSession, clearAllSessions, CoachingSession, CoachingFeedbackEntry } from '../services/firebase';
+
+const isWeb = Platform.OS === 'web';
+
+// Web-compatible confirm dialog
+const showConfirmDialog = (
+  title: string,
+  message: string,
+  onConfirm: () => void,
+  destructive: boolean = true
+) => {
+  if (isWeb) {
+    if (window.confirm(`${title}\n\n${message}`)) {
+      onConfirm();
+    }
+  } else {
+    Alert.alert(
+      title,
+      message,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: destructive ? 'Delete' : 'Confirm', style: destructive ? 'destructive' : 'default', onPress: onConfirm },
+      ]
+    );
+  }
+};
 
 interface HistoryScreenProps {
   navigation: any;
@@ -31,8 +58,10 @@ export default function HistoryScreen({ navigation }: HistoryScreenProps) {
   const [sessions, setSessions] = useState<CoachingSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedSession, setSelectedSession] = useState<CoachingSession | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
   const fetchSessions = useCallback(async () => {
     if (!user) return;
@@ -56,6 +85,63 @@ export default function HistoryScreen({ navigation }: HistoryScreenProps) {
     setIsRefreshing(true);
     fetchSessions();
   }, [fetchSessions]);
+
+  const handleDeleteSession = (session: CoachingSession) => {
+    showConfirmDialog(
+      'Delete Session',
+      'Are you sure you want to delete this session? This action cannot be undone.',
+      async () => {
+        if (!user || !session.id) return;
+        
+        setIsDeleting(true);
+        try {
+          await deleteSession(user.uid, session.id);
+          setSessions(prev => prev.filter(s => s.id !== session.id));
+          setShowDetailModal(false);
+          setSelectedSession(null);
+        } catch (error) {
+          console.error('Error deleting session:', error);
+          if (isWeb) {
+            window.alert('Failed to delete session. Please try again.');
+          } else {
+            Alert.alert('Error', 'Failed to delete session. Please try again.');
+          }
+        } finally {
+          setIsDeleting(false);
+        }
+      }
+    );
+  };
+
+  const handleClearAllSessions = () => {
+    showConfirmDialog(
+      'Clear All History',
+      `Are you sure you want to delete all ${sessions.length} sessions? This action cannot be undone.`,
+      async () => {
+        if (!user) return;
+        
+        setIsDeleting(true);
+        try {
+          const deletedCount = await clearAllSessions(user.uid);
+          setSessions([]);
+          if (isWeb) {
+            window.alert(`Successfully deleted ${deletedCount} sessions.`);
+          } else {
+            Alert.alert('Success', `Successfully deleted ${deletedCount} sessions.`);
+          }
+        } catch (error) {
+          console.error('Error clearing sessions:', error);
+          if (isWeb) {
+            window.alert('Failed to clear history. Please try again.');
+          } else {
+            Alert.alert('Error', 'Failed to clear history. Please try again.');
+          }
+        } finally {
+          setIsDeleting(false);
+        }
+      }
+    );
+  };
 
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -146,12 +232,24 @@ export default function HistoryScreen({ navigation }: HistoryScreenProps) {
           <Ionicons name="calendar-outline" size={16} color="#8b8b8b" />
           <Text style={styles.sessionDate}>{formatDate(item.startedAt)}</Text>
         </View>
-        {item.safeStateTriggered && (
-          <View style={styles.safeStateBadge}>
-            <Ionicons name="pause-circle" size={14} color="#f59e0b" />
-            <Text style={styles.safeStateText}>Paused</Text>
-          </View>
-        )}
+        <View style={styles.sessionHeaderRight}>
+          {item.safeStateTriggered && (
+            <View style={styles.safeStateBadge}>
+              <Ionicons name="pause-circle" size={14} color="#f59e0b" />
+              <Text style={styles.safeStateText}>Paused</Text>
+            </View>
+          )}
+          <TouchableOpacity
+            style={styles.deleteSessionButton}
+            onPress={(e) => {
+              e.stopPropagation?.();
+              handleDeleteSession(item);
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="trash-outline" size={18} color="#ef4444" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.sessionStats}>
@@ -260,6 +358,14 @@ export default function HistoryScreen({ navigation }: HistoryScreenProps) {
 
   return (
     <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.container}>
+      {/* Deleting Overlay */}
+      {isDeleting && (
+        <View style={styles.deletingOverlay}>
+          <ActivityIndicator size="large" color="#e94560" />
+          <Text style={styles.deletingText}>Deleting...</Text>
+        </View>
+      )}
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
@@ -270,9 +376,24 @@ export default function HistoryScreen({ navigation }: HistoryScreenProps) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Session History</Text>
         <View style={styles.headerRight}>
-          <Text style={styles.sessionCount}>{sessions.length} sessions</Text>
+          {sessions.length > 0 && (
+            <TouchableOpacity
+              style={styles.clearAllButton}
+              onPress={handleClearAllSessions}
+            >
+              <Ionicons name="trash-outline" size={18} color="#ef4444" />
+              <Text style={styles.clearAllText}>Clear All</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
+
+      {/* Session Count */}
+      {sessions.length > 0 && (
+        <View style={styles.sessionCountBar}>
+          <Text style={styles.sessionCount}>{sessions.length} session{sessions.length !== 1 ? 's' : ''}</Text>
+        </View>
+      )}
 
       {/* Session List */}
       <FlatList
@@ -308,7 +429,12 @@ export default function HistoryScreen({ navigation }: HistoryScreenProps) {
               <Ionicons name="close" size={28} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Session Details</Text>
-            <View style={{ width: 40 }} />
+            <TouchableOpacity 
+              style={styles.modalDeleteButton}
+              onPress={() => selectedSession && handleDeleteSession(selectedSession)}
+            >
+              <Ionicons name="trash-outline" size={24} color="#ef4444" />
+            </TouchableOpacity>
           </View>
 
           {selectedSession && (
@@ -420,12 +546,44 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   headerRight: {
-    width: 80,
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  clearAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+  clearAllText: {
+    color: '#ef4444',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  sessionCountBar: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
   },
   sessionCount: {
     color: '#8b8b8b',
     fontSize: 14,
+  },
+  deletingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  deletingText: {
+    color: '#fff',
+    fontSize: 16,
+    marginTop: 12,
   },
   listContent: {
     padding: 20,
@@ -462,11 +620,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    marginRight: 8,
   },
   safeStateText: {
     color: '#f59e0b',
     fontSize: 12,
     marginLeft: 4,
+  },
+  sessionHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deleteSessionButton: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
   },
   sessionStats: {
     flexDirection: 'row',
@@ -572,6 +740,14 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalDeleteButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: 20,
   },
   modalTitle: {
     fontSize: 18,
