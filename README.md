@@ -211,40 +211,52 @@ The mobile app features **live emotion feedback**:
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 18+ (see `.nvmrc` - run `nvm use` if using nvm)
 - Python 3.11+
-- Google Cloud SDK
-- React Native CLI
-- Expo CLI
+- Google Cloud SDK (optional, for production features)
 
 ### Installation
 
-1. **Clone and install frontend dependencies:**
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/hiyashah1098/TrueReact.git
+   cd TrueReact
+   ```
+
+2. **Set up the mobile app:**
    ```bash
    cd mobile
    npm install
+   npx expo install   # Links native dependencies
    ```
 
-2. **Set up backend:**
+3. **Set up the backend:**
    ```bash
    cd backend
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    pip install -r requirements.txt
+   cp .env.example .env      # Then edit .env with your API keys
    ```
 
-3. **Configure GCP credentials:**
+4. **Configure environment variables:**
+   - Edit `backend/.env` with your Google Cloud project ID and Gemini API key
+   - Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
+
+5. **Run locally:**
    ```bash
-   export GOOGLE_CLOUD_PROJECT=your-project-id
-   gcloud auth application-default login
+   # Backend (from backend directory)
+   uvicorn src.main:app --reload --host 0.0.0.0 --port 8080
+
+   # Mobile (in separate terminal, from mobile directory)
+   npx expo start
    ```
 
-4. **Run locally:**
-   ```bash
-   # Backend
-   cd backend && python main.py
+### Troubleshooting
 
-   # Mobile (in separate terminal)
-   cd mobile && npx expo start
-   ```
+- **"Module not found" errors**: Run `npx expo install` in the mobile directory
+- **Backend won't start**: Ensure you've activated the venv and created `.env` from `.env.example`
+- **WebSocket connection fails**: Check that backend is running on port 8080
 
 ## 📁 Project Structure
 
