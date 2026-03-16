@@ -6,7 +6,7 @@ TrueReact helps users align their internal intent with their external social sig
 
 ## � Live Demo
 
-**Web App:** [https://truereact.surge.sh](https://truereact.surge.sh)
+**Web App:** [https://truereact-latest-20260316.surge.sh](https://truereact-latest-20260316.surge.sh)
 
 > Access TrueReact directly from your browser - no installation required! Works on desktop and mobile browsers.
 
@@ -14,7 +14,7 @@ TrueReact helps users align their internal intent with their external social sig
 
 | Platform | Status | Access |
 |----------|--------|--------|
-| **Web** | ✅ Live | [truereact.surge.sh](https://truereact.surge.sh) |
+| **Web** | ✅ Live | [truereact-latest-20260316.surge.sh](https://truereact-latest-20260316.surge.sh) |
 | **iOS** | ✅ Ready | Run locally with Expo Go |
 | **Android** | ✅ Ready | Run locally with Expo Go |
 
@@ -257,6 +257,70 @@ The mobile app features **live emotion feedback**:
 - **"Module not found" errors**: Run `npx expo install` in the mobile directory
 - **Backend won't start**: Ensure you've activated the venv and created `.env` from `.env.example`
 - **WebSocket connection fails**: Check that backend is running on port 8080
+
+## ✅ Reproducible Testing Instructions
+
+Use the steps below to reproduce a local run and verify core app behavior.
+
+### 1) Install dependencies
+
+```bash
+# From repo root
+cd mobile
+npm install
+
+cd ../backend
+python -m venv venv
+source venv/bin/activate  # Windows PowerShell: .\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### 2) Configure environment
+
+```bash
+# From backend/
+cp .env.example .env  # Windows PowerShell: Copy-Item .env.example .env
+```
+
+Fill required keys in `backend/.env`:
+- `GEMINI_API_KEY`
+- `GOOGLE_CLOUD_PROJECT`
+
+### 3) Start backend
+
+```bash
+# Terminal A (from backend/)
+source venv/bin/activate  # Windows PowerShell: .\venv\Scripts\Activate.ps1
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8080
+```
+
+Expected result:
+- Uvicorn starts successfully
+- Server reachable at `http://localhost:8080`
+
+### 4) Start web client
+
+```bash
+# Terminal B (from mobile/)
+npm run web
+```
+
+Expected result:
+- Expo starts and prints a local web URL (commonly `http://localhost:8081` or `http://localhost:8082`)
+- App loads in browser
+
+### 5) End-to-end smoke test
+
+1. Open the web app URL.
+2. Navigate to a live session screen.
+3. Confirm the app connects to backend WebSocket without errors.
+4. Trigger a short audio interaction and verify coaching feedback appears.
+5. Verify emotion visualization updates during interaction.
+
+Expected result:
+- No startup crashes in either terminal
+- WebSocket remains connected
+- Real-time feedback and UI updates are visible
 
 ## 📁 Project Structure
 

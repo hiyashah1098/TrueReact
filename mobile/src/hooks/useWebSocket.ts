@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { Platform } from 'react-native';
 
 type WebSocketMessage = {
   type: string;
@@ -23,9 +24,17 @@ type UseWebSocketReturn = {
 };
 
 // Configuration
-const WS_URL = __DEV__ 
-  ? 'ws://localhost:8080/ws/session' 
-  : 'wss://truereact-backend-636712945693.us-central1.run.app/ws/session';
+// For mobile devices, replace 'localhost' with your computer's IP: 192.168.0.9
+const getWsUrl = () => {
+  if (!__DEV__) {
+    return 'wss://truereact-backend-636712945693.us-central1.run.app/ws/session';
+  }
+  // In dev mode: web uses localhost, mobile uses your machine's IP
+  const host = Platform.OS === 'web' ? 'localhost' : '192.168.0.9';
+  return `ws://${host}:8080/ws/session`;
+};
+
+const WS_URL = getWsUrl();
 
 const RECONNECT_DELAY = 3000;
 const MAX_RECONNECT_ATTEMPTS = 5;
