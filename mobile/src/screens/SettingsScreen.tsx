@@ -340,7 +340,7 @@ export default function SettingsScreen() {
             <Text style={[styles.appName, { color: colors.text }]}>TrueReact</Text>
             <Text style={[styles.version, { color: colors.textSecondary }]}>Version 1.0.0</Text>
             <Text style={[styles.copyright, { color: colors.textMuted }]}>
-              Built for Hacklytics 2026
+              
             </Text>
           </View>
         </View>
